@@ -21,9 +21,20 @@ OPTS+=-DDBM_INLINE_HASH
 OPTS+=-DDBM_TRACES #-DTB_AS_TRACE_HEAD #-DBLXI_AS_TRACE_HEAD
 #OPTS+=-DCC_HUGETLB -DMETADATA_HUGETLB
 
+
 VERSION?=$(shell git describe --abbrev=8 --dirty --always || echo '\<nogit\>')
-CFLAGS+=-D_GNU_SOURCE -g -std=gnu99 -O2 -Wunused-variable
+CFLAGS+=-D_GNU_SOURCE -g -std=gnu99 -O2 -Wunused-variable 
 CFLAGS+=-DVERSION=\"$(VERSION)\"
+
+COMP=GCC
+ifeq ($(findstring clang, $(CC)), clang)
+	COMP=CLANG
+endif
+
+ifeq ($(COMP), CLANG)
+	CFLAGS+=-no-integrated-as
+endif
+
 
 LDFLAGS+=-static -ldl
 LIBS=-lelf -lpthread -lz
@@ -32,6 +43,8 @@ INCLUDES=-I/usr/include/libelf -I.
 SOURCES= common.c dbm.c traces.c syscalls.c dispatcher.c signals.c util.S
 SOURCES+=api/helpers.c api/plugin_support.c api/branch_decoder_support.c api/load_store.c api/internal.c api/hash_table.c
 SOURCES+=elf/elf_loader.o elf/symbol_parser.o
+
+
 
 ARCH=$(shell $(CC) -dumpmachine | awk -F '-' '{print $$1}')
 ifeq ($(findstring arm, $(ARCH)), arm)
