@@ -31,6 +31,18 @@ ifeq ($(findstring clang, $(CC)), clang)
 	COMP=CLANG
 endif
 
+
+ifdef ($(MORELLO))
+	COMP=CLANG
+
+endif
+
+ifeq ($(MORELLO), pure-freebsd)
+
+	CFLAGS+=-mabi=purecap -femulated-tls --sysroot=$(CHERIOUTPUT)/rootfs-morello-purecap
+	CFLAGS+=-B $(CHERIOUTPUT)/morello-sdk/bin/ -mcpu=rainier  -target aarch64-unknown-freebsd13  -march=morello+c64 
+endif	
+
 ifeq ($(COMP), CLANG)
 	CFLAGS+=-no-integrated-as
 endif
@@ -47,6 +59,14 @@ SOURCES+=elf/elf_loader.o elf/symbol_parser.o
 
 
 ARCH=$(shell $(CC) -dumpmachine | awk -F '-' '{print $$1}')
+ifdef $(MORELLO)
+        HEADERS += api/emit_a64.h
+        LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0x7000000000)
+        PIE += pie/pregenerated/pie-a64-field-decoder.o pie/pregenerated/pie-a64-encoder.o pie/pregenerated/pie-a64-decoder.o
+        SOURCES += arch/aarch64/dispatcher_aarch64.S arch/aarch64/dispatcher_aarch64.c
+        SOURCES += arch/aarch64/scanner_a64.c
+        SOURCES += api/emit_a64.c
+endif
 ifeq ($(findstring arm, $(ARCH)), arm)
 	CFLAGS += -march=armv7-a -mfpu=neon
 	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0xa8000000)
@@ -57,6 +77,7 @@ ifeq ($(findstring arm, $(ARCH)), arm)
 	SOURCES += arch/aarch32/scanner_t32.c arch/aarch32/scanner_a32.c
 	SOURCES += api/emit_arm.c api/emit_thumb.c
 endif
+
 ifeq ($(ARCH),aarch64)
 	HEADERS += api/emit_a64.h
 	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0x7000000000)
@@ -65,6 +86,7 @@ ifeq ($(ARCH),aarch64)
 	SOURCES += arch/aarch64/scanner_a64.c
 	SOURCES += api/emit_a64.c
 endif
+
 
 ifdef PLUGINS
 	CFLAGS += -DPLUGINS_NEW
