@@ -290,6 +290,7 @@ size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp) 
 
   ELF_AUXV_T *s_aux = (ELF_AUXV_T *)(envp + 1);
   while(s_aux->a_type != AT_NULL) {
+  #ifndef MORELLOBSD
     switch(s_aux->a_type) {
       case AT_PLATFORM:
       case AT_EXECFN: {
@@ -297,6 +298,7 @@ size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp) 
         size += strlen(s) + 1;
       }
     } // switch
+  #endif
     size += sizeof(*s_aux);
     s_aux++;
   } // while
@@ -314,7 +316,11 @@ char *copy_string_to_stack(char *string, char **stack_strings) {
 
 #define INITIAL_STACK_SIZE (4*1024*1024)
 #define STACK_PROT  (PROT_READ | PROT_WRITE)
-#define STACK_FLAGS (MAP_PRIVATE|MAP_ANONYMOUS|MAP_GROWSDOWN|MAP_STACK)
+#ifdef MORELLOBSD
+  #define STACK_FLAGS (MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK)
+#else
+  #define STACK_FLAGS (MAP_PRIVATE|MAP_ANONYMOUS|MAP_GROWSDOWN|MAP_STACK)
+#endif
 #define stack_push(val) stack[stack_i++] = (val);
 
 void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv) {

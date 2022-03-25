@@ -38,8 +38,8 @@ ifdef ($(MORELLO))
 endif
 
 ifeq ($(MORELLO), pure-freebsd)
-
-	CFLAGS+=-mabi=purecap -femulated-tls --sysroot=$(CHERIOUTPUT)/rootfs-morello-purecap
+	CFLAGS+=-DMORELLOBSD -D_BSD_SOURCE
+	CFLAGS+=-mabi=purecap -femulated-tls --sysroot=$(CHERIOUTPUT)/rootfs-morello-purecap -ferror-limit=5 -Wcheri-provenance
 	CFLAGS+=-B $(CHERIOUTPUT)/morello-sdk/bin/ -mcpu=rainier  -target aarch64-unknown-freebsd13  -march=morello+c64 
 endif	
 
@@ -60,12 +60,12 @@ SOURCES+=elf/elf_loader.o elf/symbol_parser.o
 
 ARCH=$(shell $(CC) -dumpmachine | awk -F '-' '{print $$1}')
 ifdef $(MORELLO)
-        HEADERS += api/emit_a64.h
-        LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0x7000000000)
-        PIE += pie/pregenerated/pie-a64-field-decoder.o pie/pregenerated/pie-a64-encoder.o pie/pregenerated/pie-a64-decoder.o
-        SOURCES += arch/aarch64/dispatcher_aarch64.S arch/aarch64/dispatcher_aarch64.c
-        SOURCES += arch/aarch64/scanner_a64.c
-        SOURCES += api/emit_a64.c
+	HEADERS += api/emit_a64.h
+	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0x7000000000)
+	PIE += pie/pregenerated/pie-a64-field-decoder.o pie/pregenerated/pie-a64-encoder.o pie/pregenerated/pie-a64-decoder.o
+	SOURCES += arch/aarch64/dispatcher_aarch64.S arch/aarch64/dispatcher_aarch64.c
+	SOURCES += arch/aarch64/scanner_a64.c
+	SOURCES += api/emit_a64.c
 endif
 ifeq ($(findstring arm, $(ARCH)), arm)
 	CFLAGS += -march=armv7-a -mfpu=neon

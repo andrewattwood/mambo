@@ -18,6 +18,11 @@
   limitations under the License.
 */
 
+#ifdef MORELLOBSD
+  #define _NSIG NSIG
+#endif
+
+
 #ifndef __DBM_H__
 #define __DBM_H__
 
@@ -72,6 +77,7 @@
 #define FULLADDR 0x2
 
 #define MAX_PLUGIN_NO (10)
+
 
 typedef enum {
   mambo_bb = 0,

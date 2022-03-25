@@ -49,6 +49,13 @@
   #define SIG_FRAG_OFFSET 0
 #endif
 
+
+#ifdef MORELLOBSD
+  #define _NSIG NSIG
+#endif
+
+
+
 void *dbm_start_thread_pth(void *ptr, void *mambo_sp) {
   dbm_thread *thread_data = (dbm_thread *)ptr;
   assert(thread_data->clone_args->child_stack);

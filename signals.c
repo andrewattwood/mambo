@@ -54,6 +54,12 @@
   #define sp_field uc_mcontext.sp
 #endif
 
+
+#ifdef MORELLOBSD
+  #define _NSIG NSIG
+#endif
+
+
 typedef struct {
   uintptr_t pid;
   uintptr_t tid;
