@@ -79,10 +79,10 @@ void linked_list_init(ll *list, int size);
 ll_entry *linked_list_alloc(ll *list);
 
 int interval_map_init(interval_map *imap, ssize_t size);
-int interval_map_add(interval_map *imap, uintptr_t start, size_t len, int fd);
-ssize_t interval_map_search(interval_map *imap, uintptr_t start, size_t len);
+int interval_map_add(interval_map *imap, uintptr_t start, uintptr_t end , int fd);
+ssize_t interval_map_search(interval_map *imap, uintptr_t start, uintptr_t end);
 int interval_map_search_by_addr(interval_map *imap, uintptr_t addr, interval_map_entry *entry);
-ssize_t interval_map_delete(interval_map *imap, uintptr_t start, size_t len);
+ssize_t interval_map_delete(interval_map *imap, uintptr_t start,uintptr_t end);
 
 uint32_t next_reg_in_list(uint32_t reglist, uint32_t start);
 uint32_t last_reg_in_list(uint32_t reglist, uint32_t start);

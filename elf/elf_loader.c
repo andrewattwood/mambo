@@ -359,22 +359,29 @@ void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, cha
     d_aux->a_type = s_aux->a_type;
 
     switch(s_aux->a_type) {
+
+#ifndef MORELLOBSD
+        case AT_CLKTCK:
+        case AT_SECURE:      
+        case AT_SYSINFO_EHDR:
+#endif
+
       case AT_PAGESZ:
       case AT_HWCAP:
       case AT_HWCAP2:
-      case AT_CLKTCK:
+
       case AT_FLAGS:
       case AT_UID:
       case AT_EUID:
       case AT_GID:
       case AT_EGID:
-      case AT_SECURE:
-      case AT_SYSINFO_EHDR:
+
+
       case AT_MINSIGSTKSZ:
       case AT_PHENT:
         d_aux->a_un.a_val = s_aux->a_un.a_val;
         break;
-
+#ifndef MORELLOBSD
       case AT_RANDOM: {
         stack_strings -= 15;
         memcpy(stack_strings, (void *)s_aux->a_un.a_val, 16);
@@ -382,11 +389,14 @@ void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, cha
         stack_strings--;
         break;
       }
-
       case AT_PLATFORM:
       case AT_EXECFN:
         d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_val, &stack_strings);
-        break;
+        break;    
+
+#endif     
+    
+
 
       case AT_BASE:
         d_aux->a_un.a_val = auxv->at_base;

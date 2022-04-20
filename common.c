@@ -416,15 +416,15 @@ extern void __try_memcpy_error();
 #elif __aarch64__
   #define pc_reg uc_mcontext.pc
 #endif
-void memcpy_fault(int i, siginfo_t *info, void *ctx_ptr) {
+/*void memcpy_fault(int i, siginfo_t *info, void *ctx_ptr) {
   ucontext_t *ctx = (ucontext_t *)ctx_ptr;
   ctx->pc_reg = (uintptr_t)__try_memcpy_error;
-}
+*/}
 #undef pc_reg
 
 int try_memcpy(void *dst, void *src, size_t n) {
   struct sigaction act, oldact;
-  act.sa_sigaction = memcpy_fault;
+ // act.sa_sigaction = memcpy_fault;
   sigemptyset(&act.sa_mask);
   act.sa_flags = SA_SIGINFO;
   int ret = sigaction(SIGSEGV, &act, &oldact);

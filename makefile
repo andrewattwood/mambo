@@ -38,20 +38,25 @@ ifdef ($(MORELLO))
 endif
 
 ifeq ($(MORELLO), pure-freebsd)
-	CFLAGS+=-DMORELLOBSD -D_BSD_SOURCE
-	CFLAGS+=-mabi=purecap -femulated-tls --sysroot=$(CHERIOUTPUT)/rootfs-morello-purecap -ferror-limit=5 -Wcheri-provenance
-	CFLAGS+=-B $(CHERIOUTPUT)/morello-sdk/bin/ -mcpu=rainier  -target aarch64-unknown-freebsd13  -march=morello+c64 
+	CFLAGS+=-DMORELLOBSD -D_BSD_SOURCE -v
+	CFLAGS+=-mabi=purecap -femulated-tls --sysroot=$(CHERIOUTPUT)/rootfs-morello-purecap -ferror-limit=10 -Wcheri-provenance
+	CFLAGS+=-B $(CHERI)output/morello-sdk/bin/ -mcpu=rainier  -target aarch64-unknown-freebsd13  -march=morello+c64 
 endif	
 
-ifeq ($(COMP), CLANG)
-	CFLAGS+=-no-integrated-as
-endif
+#ifeq ($(COMP), CLANG)
+#	CFLAGS+=-no-integrated-as
+#endif
 
 
 LDFLAGS+=-static -ldl
 LIBS=-lelf -lpthread -lz
 HEADERS=*.h makefile
-INCLUDES=-I/usr/include/libelf -I.
+ifeq ($(MORELLO), pure-freebsd)
+	INCLUDES=-I$(CHERIOUTPUT)/rootfs-morello-purecap/usr/include/ -I.
+else
+	INCLUDES=-I/usr/include/libelf -I.
+endif
+
 SOURCES= common.c dbm.c traces.c syscalls.c dispatcher.c signals.c util.S
 SOURCES+=api/helpers.c api/plugin_support.c api/branch_decoder_support.c api/load_store.c api/internal.c api/hash_table.c
 SOURCES+=elf/elf_loader.o elf/symbol_parser.o
@@ -102,6 +107,7 @@ pie:
 	@$(MAKE) --no-print-directory -C pie/ native
 
 %.o: %.c %.h
+	$(info MAMBO :-)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(or $(OUTPUT_FILE),dbm): $(HEADERS) $(SOURCES) $(PLUGINS)
