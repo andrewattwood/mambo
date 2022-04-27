@@ -24,11 +24,31 @@
 .syntax unified
 #endif
 
-.global dbm_client_entry
-.func dbm_client_entry
-.type dbm_client_entry, %function
+#ifdef __aarch64__ 
+  #ifdef MORELLOBSD
+    #define PTR_REG(n)	c##n
+		#define GP_REG(n)	PTR_REG(n)
+		#define SP_REG		csp
+		#define PTR_SIZE	__SIZEOF_POINTER__
+  #else
+    #define PTR_REG(n)	x##n
+		#define GP_REG(n)	PTR_REG(n)
+		#define SP_REG		sp
+		#define PTR_SIZE	8
+  #endif
+#endif
+
+
+
+
+.global  dbm_client_entry                             // -- Begin function dbm_client_entry
+.p2align        2
+.type   dbm_client_entry,@function
+.Lfunc_begin_dbm_client_entry:
+.cfi_startproc purecap
 
 #ifdef __arm__
+
 .code 32
 dbm_client_entry:
   MOV SP, R1
@@ -39,20 +59,31 @@ dbm_client_entry:
   MOV R3, #0
   BLX LR
   BX LR
+
 #endif // __arm__
 
-#ifdef __aarch64__
-dbm_client_entry:
-  MOV SP, X1
-  STP XZR, XZR, [SP, #-16]!
-  BR X0
-#endif
-.endfunc
+#ifdef __aarch64__ 
 
+dbm_client_entry:
+  MOV PTR_REG(SP), GP_REG(1)
+  STP GP_REG(ZR), GP_REG(ZR), [PTR_REG(SP), #-(2 * PTR_SIZE)]!
+  BR PTR_REG(0)
+
+#endif
+
+.Lfunc_end_dbm_client_entry:
+.size   dbm_client_entry, .Lfunc_end_dbm_client_entry-.Lfunc_begin_dbm_client_entry
+.cfi_endproc
+
+
+# Thread entry
 # R0 - new SP
-.global th_enter
-.func   th_enter
-.type   th_enter, %function
+# R1 - Thread entry instruction
+.global  th_enter                             // -- Begin function th_enter
+.p2align        2
+.type   th_enter,@function
+.Lfunc_begin_th_enter:
+.cfi_startproc purecap
 
 #ifdef __arm__
 .thumb_func
@@ -65,68 +96,88 @@ th_enter:
 
 #ifdef __aarch64__
 th_enter:
-  MOV SP, X0
-  LDP  X4,  X5, [SP,  #16]
-  LDP  X6,  X7, [SP,  #32]
-  LDP  X8,  X9, [SP,  #48]
-  LDP X10, X11, [SP,  #64]
-  LDP X12, X13, [SP,  #80]
-  LDP X14, X15, [SP,  #96]
-  LDP X16, X17, [SP, #112]
-  LDP X18, X19, [SP, #128]
-  LDP X20, X21, [SP, #144]
-  LDP X22, X23, [SP, #160]
-  LDP X24, X25, [SP, #176]
-  LDP X26, X27, [SP, #192]
-  LDR X28,      [SP, #208]
-  LDP X29, X30, [SP, #224]
-  LDP  X2,  X3, [SP], #240
+  MOV PTR_REG(SP), GP_REG(0)
+  LDP  GP_REG(4),  GP_REG(5), [PTR_REG(SP),  #(2 * PTR_SIZE)]
+  LDP  GP_REG(6),  GP_REG(7), [PTR_REG(SP),  #(4 * PTR_SIZE)]
+  LDP  GP_REG(8),  GP_REG(9), [PTR_REG(SP),  #(6 * PTR_SIZE)]
+  LDP GP_REG(10), GP_REG(11), [PTR_REG(SP),  #(8 * PTR_SIZE)]
+  LDP GP_REG(12), GP_REG(13), [PTR_REG(SP),  #(10 * PTR_SIZE)]
+  LDP GP_REG(14), GP_REG(15), [PTR_REG(SP),  #(12 * PTR_SIZE)]
+  LDP GP_REG(16), GP_REG(17), [PTR_REG(SP), #(14 * PTR_SIZE)]
+  LDP GP_REG(18), GP_REG(19), [PTR_REG(SP), #(16 * PTR_SIZE)]
+  LDP GP_REG(20), GP_REG(21), [PTR_REG(SP), #(18 * PTR_SIZE)]
+  LDP GP_REG(22), GP_REG(23), [PTR_REG(SP), #(20 * PTR_SIZE)]
+  LDP GP_REG(24), GP_REG(25), [PTR_REG(SP), #(22 * PTR_SIZE)]
+  LDP GP_REG(26), GP_REG(27), [PTR_REG(SP), #(24 * PTR_SIZE)]
+  LDR GP_REG(28),      [PTR_REG(SP), #(26 * PTR_SIZE)]
+  LDP GP_REG(29), GP_REG(30), [PTR_REG(SP), #(28 * PTR_SIZE)]
+  LDP  GP_REG(2),  GP_REG(3), [PTR_REG(SP)], #(30 * PTR_SIZE)
 
-  BR X1
+  BR PTR_REG(1)
 #endif
-.endfunc
 
-.global new_thread_trampoline
-.func
-.type   new_thread_trampoline, %function
+.Lfunc_end_th_enter:
+.size   th_enter, .Lfunc_end_th_enter-.Lfunc_begin_th_enter
+.cfi_endproc
+
+# passed to thread_create
+.global  new_thread_trampoline                             // -- Begin function new_thread_trampoline
+.p2align        2
+.type   new_thread_trampoline,@function
+.Lfunc_begin_new_thread_trampoline:
+.cfi_startproc purecap
+
 new_thread_trampoline:
 #ifdef __arm__
   PUSH {R4-R12, LR}
   MOV R1, SP
-#elif __aarch64__
-  STP X19, X20, [SP, #-96]!
-  STP X21, X22, [SP, #16]
-  STP X23, X24, [SP, #32]
-  STP X25, X26, [SP, #48]
-  STP X27, X28, [SP, #64]
-  STP X29, X30, [SP, #80]
-  MOV X1, SP
-#endif
   B dbm_start_thread_pth
-.endfunc
+#elif __aarch64__
+  STP GP_REG(X19), GP_REG(X20), [PTR_REG(SP), #-(12 * PTR_SIZE)]!
+  STP GP_REG(X21), GP_REG(X22), [PTR_REG(SP), #(2 * PTR_SIZE)]
+  STP GP_REG(X23), GP_REG(X24), [PTR_REG(SP), #(4 * PTR_SIZE)]
+  STP GP_REG(X25), GP_REG(X26), [PTR_REG(SP), #(6 * PTR_SIZE)]
+  STP GP_REG(X27), GP_REG(X28), [PTR_REG(SP), #(8 * PTR_SIZE)]
+  STP GP_REG(X29), GP_REG(X30), [PTR_REG(SP), #(10 * PTR_SIZE)]
+  MOV GP_REG(X1), PTR_REG(SP)
+  B dbm_start_thread_pth
+#endif
 
-.global return_with_sp
-.func
-.type   return_with_sp, %function
+
+.Lfunc_end_new_thread_trampoline:
+.size   new_thread_trampoline, .Lfunc_end_new_thread_trampoline-.Lfunc_begin_new_thread_trampoline
+.cfi_endproc
+
+.global  return_with_sp                             // -- Begin function return_with_sp
+.p2align        2
+.type   return_with_sp,@function
+.Lfunc_begin_return_with_sp:
+.cfi_startproc purecap
+
 return_with_sp:
 #ifdef __arm__
   MOV SP, R0
   POP {R4-R12, PC}
 #elif __aarch64__
-  MOV SP, X0
-  LDP X21, X22, [SP, #16]
-  LDP X23, X24, [SP, #32]
-  LDP X25, X26, [SP, #48]
-  LDP X27, X28, [SP, #64]
-  LDP X29, X30, [SP, #80]
-  LDP X19, X20, [SP], #96
+  MOV PTR_REG(SP), X0
+  LDP GP_REG(X21), GP_REG(X22), [PTR_REG(SP), #(2 * PTR_SIZE)]
+  LDP GP_REG(X23), GP_REG(X24), [PTR_REG(SP), #(4 * PTR_SIZE)]
+  LDP GP_REG(X25), GP_REG(X26), [PTR_REG(SP), #(6 * PTR_SIZE)]
+  LDP GP_REG(X27), GP_REG(X28), [PTR_REG(SP), #(8 * PTR_SIZE)]
+  LDP GP_REG(X29), GP_REG(X30), [PTR_REG(SP), #(10 * PTR_SIZE)]
+  LDP GP_REG(X19), GP_REG(X20), [PTR_REG(SP)], #(12 * PTR_SIZE)
   RET
 #endif
-.endfunc
 
-.global raw_syscall
-.func   raw_syscall
-.type   raw_syscall, %function
+.Lfunc_end_return_with_sp:
+.size   return_with_sp, .Lfunc_end_return_with_sp-.Lfunc_begin_return_with_sp
+.cfi_endproc
+
+.global  raw_syscall                             // -- Begin function raw_syscall
+.p2align        2
+.type   raw_syscall,@function
+.Lfunc_begin_raw_syscall:
+.cfi_startproc purecap
 
 raw_syscall:
 #ifdef __arm__
@@ -153,7 +204,10 @@ raw_syscall:
   SVC 0
   RET
 #endif
-.endfunc
+
+.Lfunc_end_raw_syscall:
+.size   raw_syscall, .Lfunc_end_raw_syscall-.Lfunc_begin_raw_syscall
+.cfi_endproc
 
 .global signal_trampoline
 .func signal_trampoline

@@ -52,7 +52,7 @@ LDFLAGS+=-static -ldl
 LIBS=-lelf -lpthread -lz
 HEADERS=*.h makefile
 ifeq ($(MORELLO), pure-freebsd)
-	INCLUDES=-I$(CHERIOUTPUT)/rootfs-morello-purecap/usr/include/ -I.
+	INCLUDES=-I$(CHERIOUTPUT)rootfs-morello-purecap/usr/include -I.
 else
 	INCLUDES=-I/usr/include/libelf -I.
 endif
