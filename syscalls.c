@@ -19,7 +19,9 @@
 */
 
 #include <stdio.h>
+#ifndef MORELLOBSD
 #include <asm/unistd.h>
+#endif
 #include <pthread.h>
 #include <sys/mman.h>
 #include <unistd.h>

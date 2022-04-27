@@ -24,7 +24,12 @@
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
+#ifdef MORELLOBSD
+#include <unistd.h>
+#include <sys/thr.h>
+#else
 #include <asm/unistd.h>
+#endif
 #include <pthread.h>
 #include <sys/auxv.h>
 #include <sys/mman.h>
@@ -446,7 +451,12 @@ void free_all_other_threads(dbm_thread *thread_data) {
 
 
 void reset_process(dbm_thread *thread_data) {
+  #ifdef MORELLOBSD 
+  thr_self(&thread_data->tid);
+  #else
   thread_data->tid = syscall(__NR_gettid);
+  #endif
+
 
   int ret = pthread_mutex_init(&global_data.thread_list_mutex, NULL);
   assert(ret == 0);
@@ -649,7 +659,13 @@ void main(int argc, char **argv, char **envp) {
   }
   current_thread = thread_data;
   init_thread(thread_data);
+  
+  #ifdef MORELLOBSD 
+  thr_self(&thread_data->tid);
+  #else
   thread_data->tid = syscall(__NR_gettid);
+  #endif
+
   register_thread(thread_data, false);
 
   uintptr_t block_address = scan(thread_data, (uint16_t *)entry_address, ALLOCATE_BB);

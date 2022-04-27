@@ -21,7 +21,9 @@
 #include <signal.h>
 #include <assert.h>
 #include <unistd.h>
+#ifndef MORELLOBSD
 #include <asm/unistd.h>
+#else
 #include <string.h>
 
 #include "dbm.h"

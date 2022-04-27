@@ -28,11 +28,13 @@
   #ifdef MORELLOBSD
     #define PTR_REG(n)	c##n
 		#define GP_REG(n)	PTR_REG(n)
+    #define GP_REG_W(n)	PTR_REG(n)
 		#define SP_REG		csp
 		#define PTR_SIZE	__SIZEOF_POINTER__
   #else
     #define PTR_REG(n)	x##n
 		#define GP_REG(n)	PTR_REG(n)
+    #define GP_REG_W(n)	w##n
 		#define SP_REG		sp
 		#define PTR_SIZE	8
   #endif
@@ -133,13 +135,12 @@ new_thread_trampoline:
   MOV R1, SP
   B dbm_start_thread_pth
 #elif __aarch64__
-  STP GP_REG(X19), GP_REG(X20), [PTR_REG(SP), #-(12 * PTR_SIZE)]!
-  STP GP_REG(X21), GP_REG(X22), [PTR_REG(SP), #(2 * PTR_SIZE)]
-  STP GP_REG(X23), GP_REG(X24), [PTR_REG(SP), #(4 * PTR_SIZE)]
-  STP GP_REG(X25), GP_REG(X26), [PTR_REG(SP), #(6 * PTR_SIZE)]
-  STP GP_REG(X27), GP_REG(X28), [PTR_REG(SP), #(8 * PTR_SIZE)]
-  STP GP_REG(X29), GP_REG(X30), [PTR_REG(SP), #(10 * PTR_SIZE)]
-  MOV GP_REG(X1), PTR_REG(SP)
+  STP GP_REG(21), GP_REG(22), [PTR_REG(SP), #(2 * PTR_SIZE)]
+  STP GP_REG(23), GP_REG(24), [PTR_REG(SP), #(4 * PTR_SIZE)]
+  STP GP_REG(25), GP_REG(26), [PTR_REG(SP), #(6 * PTR_SIZE)]
+  STP GP_REG(27), GP_REG(28), [PTR_REG(SP), #(8 * PTR_SIZE)]
+  STP GP_REG(29), GP_REG(30), [PTR_REG(SP), #(10 * PTR_SIZE)]
+  MOV GP_REG(1), PTR_REG(SP)
   B dbm_start_thread_pth
 #endif
 
@@ -159,13 +160,13 @@ return_with_sp:
   MOV SP, R0
   POP {R4-R12, PC}
 #elif __aarch64__
-  MOV PTR_REG(SP), X0
-  LDP GP_REG(X21), GP_REG(X22), [PTR_REG(SP), #(2 * PTR_SIZE)]
-  LDP GP_REG(X23), GP_REG(X24), [PTR_REG(SP), #(4 * PTR_SIZE)]
-  LDP GP_REG(X25), GP_REG(X26), [PTR_REG(SP), #(6 * PTR_SIZE)]
-  LDP GP_REG(X27), GP_REG(X28), [PTR_REG(SP), #(8 * PTR_SIZE)]
-  LDP GP_REG(X29), GP_REG(X30), [PTR_REG(SP), #(10 * PTR_SIZE)]
-  LDP GP_REG(X19), GP_REG(X20), [PTR_REG(SP)], #(12 * PTR_SIZE)
+  MOV PTR_REG(SP), GP_REG(0)
+  LDP GP_REG(21), GP_REG(22), [PTR_REG(SP), #(2 * PTR_SIZE)]
+  LDP GP_REG(23), GP_REG(24), [PTR_REG(SP), #(4 * PTR_SIZE)]
+  LDP GP_REG(25), GP_REG(26), [PTR_REG(SP), #(6 * PTR_SIZE)]
+  LDP GP_REG(27), GP_REG(28), [PTR_REG(SP), #(8 * PTR_SIZE)]
+  LDP GP_REG(29), GP_REG(30), [PTR_REG(SP), #(10 * PTR_SIZE)]
+  LDP GP_REG(19), GP_REG(20), [PTR_REG(SP)], #(12 * PTR_SIZE)
   RET
 #endif
 
@@ -193,25 +194,28 @@ raw_syscall:
   BX LR
 #endif
 #ifdef __aarch64__
-  MOV W8, W0
-  MOV X0, X1
-  MOV X1, X2
-  MOV X2, X3
-  MOV X3, X4
-  MOV X4, X5
-  MOV X5, X6
-  MOV X6, X7
+  MOV GP_REG_W(8), GP_REG_W(0)
+  MOV GP_REG(0), GP_REG(1)
+  MOV GP_REG(1), GP_REG(2)
+  MOV GP_REG(2), GP_REG(3)
+  MOV GP_REG(3), GP_REG(4)
+  MOV GP_REG(4), GP_REG(5)
+  MOV GP_REG(5), GP_REG(6)
+  MOV GP_REG(6), GP_REG(7)
   SVC 0
   RET
 #endif
 
 .Lfunc_end_raw_syscall:
-.size   raw_syscall, .Lfunc_end_raw_syscall-.Lfunc_begin_raw_syscall
+.size   signal_trampoline, .Lfunc_end_raw_syscall-.Lfunc_begin_raw_syscall
 .cfi_endproc
 
-.global signal_trampoline
-.func signal_trampoline
-.type signal_trampoline, %function
+.global  signal_trampoline                             // -- Begin function signal_trampoline
+.p2align        2
+.type   signal_trampoline,@function
+.Lfunc_begin_signal_trampoline:
+.cfi_startproc purecap
+
 
 signal_trampoline:
 #ifdef __arm__
@@ -228,44 +232,49 @@ sigret:
   SVC 0
 #endif
 #ifdef __aarch64__
-  STP  X2,  X3, [SP, #-176]!
-  STP  X4,  X5, [SP, #16]
-  STP  X6,  X7, [SP, #32]
-  STP  X8,  X9, [SP, #48]
-  STP X10, X11, [SP, #64]
-  STP X12, X13, [SP, #80]
-  STP X14, X15, [SP, #96]
-  STP X16, X17, [SP, #112]
-  STP X18, X29, [SP, #128]
-  STR X30,      [SP, #144]
-  STP  X0,  X1, [SP, #160]
+  STP  GP_REG(2),  GP_REG(3), [PTR_REG(SP), #-(PTR_SIZE * 22)]!
+  STP  GP_REG(4),  GP_REG(5), [PTR_REG(SP), #(PTR_SIZE * 2)]
+  STP  GP_REG(6),  GP_REG(7), [PTR_REG(SP), #(PTR_SIZE * 4)]
+  STP  GP_REG(8),  GP_REG(9), [PTR_REG(SP), #(PTR_SIZE * 6)]
+  STP GP_REG(10), GP_REG(11), [PTR_REG(SP), #(PTR_SIZE * 8)]
+  STP GP_REG(12), GP_REG(13), [PTR_REG(SP), #(PTR_SIZE * 10)]
+  STP GP_REG(14), GP_REG(15), [PTR_REG(SP), #(PTR_SIZE * 12)]
+  STP GP_REG(16), GP_REG(17), [PTR_REG(SP), #(PTR_SIZE * 14)]
+  STP GP_REG(18), GP_REG(29), [PTR_REG(SP), #(PTR_SIZE * 16)]
+  STR GP_REG(30),      [PTR_REG(SP), #(PTR_SIZE * 18)]
+  STP GP_REG(0),  GP_REG(1), [PTR_REG(SP), #(PTR_SIZE * 20)]
 
   BL signal_dispatcher
 
-  LDP  X4,  X5, [SP, #16]
-  LDP  X6,  X7, [SP, #32]
-  LDP  X8,  X9, [SP, #48]
-  LDP X10, X11, [SP, #64]
-  LDP X12, X13, [SP, #80]
-  LDP X14, X15, [SP, #96]
-  LDP X16, X17, [SP, #112]
-  LDP X18, X29, [SP, #128]
-  LDR X30,      [SP, #144]
-  LDP  X2,  X3, [SP], #160
+  LDP  GP_REG(4),  GP_REG(5), [PTR_REG(SP), #(PTR_SIZE * 2)] 
+  LDP  GP_REG(6),  GP_REG(7), [PTR_REG(SP), #(PTR_SIZE * 4)] 
+  LDP  GP_REG(8),  GP_REG(9), [PTR_REG(SP), #(PTR_SIZE * 6)]
+  LDP GP_REG(10), GP_REG(11), [PTR_REG(SP), #(PTR_SIZE * 8)]
+  LDP GP_REG(12), GP_REG(13), [PTR_REG(SP), #(PTR_SIZE * 10)]
+  LDP GP_REG(14), GP_REG(15), [PTR_REG(SP), #(PTR_SIZE * 12)]
+  LDP GP_REG(16), GP_REG(17), [PTR_REG(SP), #(PTR_SIZE * 14)]
+  LDP GP_REG(18), GP_REG(29), [PTR_REG(SP), #(PTR_SIZE * 16)]
+  LDR GP_REG(30),      [PTR_REG(SP), #(PTR_SIZE * 18)]
+  LDP  GP_REG(2),  GP_REG(3), [PTR_REG(SP)], #(PTR_SIZE * 20)
 
   CBZ X0, sigret
 
-  BR X0
+  BR GP_REG(0)
 sigret:
-  ADD SP, SP, #16
+  ADD PTR_REG(SP), PTR_REG(SP), #(PTR_SIZE * 2)
   MOV X8, #139
   SVC 0
 #endif
-.endfunc
 
-.global atomic_increment_u64
-.func atomic_increment_u64
-.type atomic_increment_u64, %function
+.Lfunc_end_signal_trampoline:
+.size   signal_trampoline, .Lfunc_end_signal_trampoline-.Lfunc_begin_signal_trampoline
+.cfi_endproc
+
+.global  atomic_increment_u64                             // -- Begin function atomic_increment_u64
+.p2align        2
+.type   atomic_increment_u64,@function
+.Lfunc_begin_atomic_increment_u64:
+.cfi_startproc purecap
 
 atomic_increment_u64:
 #ifdef __arm__
@@ -286,19 +295,24 @@ retry:
   BX LR
 
 #elif __aarch64__
-  LDXR X2, [X0]
+  LDXR X2, [GP_REG(0)]
   ADD X2, X2, X1
-  STXR W3, X2, [X0]
-  CBNZ W3, atomic_increment_u64
+  STXR W3, X2, [GP_REG(0)]
+  CBNZ X3, atomic_increment_u64
   MOV X0, X2
   RET
 
 #endif
-.endfunc
+.Lfunc_end_atomic_increment_u64:
+.size   atomic_increment_u64, .Lfunc_end_atomic_increment_u64-.Lfunc_begin_atomic_increment_u64
+.cfi_endproc
 
-.global atomic_increment_u32
-.func atomic_increment_u32
-.type atomic_increment_u32, %function
+
+.global  atomic_increment_u32                             // -- Begin function atomic_increment_u32
+.p2align        2
+.type   atomic_increment_u32,@function
+.Lfunc_begin_atomic_increment_u32:
+.cfi_startproc purecap
 
 atomic_increment_u32:
 #ifdef __arm__
@@ -311,19 +325,23 @@ atomic_increment_u32:
   BX LR
 
 #elif __aarch64__
-  LDXR W2, [X0]
+  LDXR W2, [GP_REG(0)]
   ADD W2, W2, W1
-  STXR W3, W2, [X0]
+  STXR W3, W2, [GP_REG(0)]
   CBNZ W3, atomic_increment_u32
   MOV W0, W2
   RET
 
 #endif
-.endfunc
+.Lfunc_end_atomic_increment_u32:
+.size   atomic_increment_u32, .Lfunc_end_atomic_increment_u32-.Lfunc_begin_atomic_increment_u32
+.cfi_endproc
 
-.global atomic_decrement_if_positive_i32
-.func atomic_decrement_if_positive_i32
-.type atomic_decrement_if_positive_i32, %function
+.global  atomic_decrement_if_positive_i32                             // -- Begin function atomic_decrement_if_positive_i32
+.p2align        2
+.type   atomic_decrement_if_positive_i32,@function
+.Lfunc_begin_atomic_decrement_if_positive_i32:
+.cfi_startproc purecap
 
 atomic_decrement_if_positive_i32:
 #ifdef __arm__
@@ -342,11 +360,11 @@ abort:
   BX LR
 
 #elif __aarch64__
-  LDXR W2, [X0]
+  LDXR W2, [GP_REG(0)]
   CMP W2, W1
   BLT abort
   SUB W2, W2, W1
-  STXR W3, W2, [X0]
+  STXR W3, W2, [GP_REG(0)]
   CBNZ W3, atomic_decrement_if_positive_i32
   MOV W0, W2
   RET
@@ -356,12 +374,16 @@ abort:
   RET
 
 #endif
-.endfunc
+.Lfunc_end_atomic_decrement_if_positive_i32:
+.size   atomic_decrement_if_positive_i32, .Lfunc_end_NAME-.Lfunc_begin_atomic_decrement_if_positive_i32
+.cfi_endproc
 
 
-.global safe_fcall_trampoline
-.func safe_fcall_trampoline
-.type safe_fcall_trampoline, %function
+.global  safe_fcall_trampoline                             // -- Begin function safe_fcall_trampoline
+.p2align        2
+.type   safe_fcall_trampoline,@function
+.Lfunc_begin_safe_fcall_trampoline:
+.cfi_startproc purecap
 
 safe_fcall_trampoline:
 #ifdef __arm__
@@ -388,14 +410,14 @@ safe_fcall_trampoline:
   POP {R5-R7, R9, R12, PC}
 
 #elif __aarch64__
-  STP X8,  X9,  [SP, #-128]!
-  STP X10, X11, [SP, #16]
-  STP X12, X13, [SP, #32]
-  STP X14, X15, [SP, #48]
-  STP X16, X17, [SP, #64]
-  STP X18, X19, [SP, #80]
-  STP X20, X21, [SP, #96]
-  STP X29, X30, [SP, #112]
+  STP GP_REG(8),  GP_REG(9),  [PTR_REG(SP), #-(PTR_SIZE * 16)]!
+  STP GP_REG(10), GP_REG(11), [PTR_REG(SP), #(PTR_SIZE * 2)]
+  STP GP_REG(12), GP_REG(13), [PTR_REG(SP), #(PTR_SIZE * 4)]
+  STP GP_REG(14), GP_REG(15), [PTR_REG(SP), #(PTR_SIZE * 6)]
+  STP GP_REG(16), GP_REG(17), [PTR_REG(SP), #(PTR_SIZE * 8)]
+  STP GP_REG(18), GP_REG(19), [PTR_REG(SP), #(PTR_SIZE * 10)]
+  STP GP_REG(20), GP_REG(21), [PTR_REG(SP), #(PTR_SIZE * 12)]
+  STP GP_REG(29), GP_REG(30), [PTR_REG(SP), #(PTR_SIZE * 14)]
 
   MRS X19, NZCV
   MRS X20, FPCR
@@ -403,7 +425,7 @@ safe_fcall_trampoline:
 
   BL push_neon
 
-  BLR X8
+  BLR GP_REG(8)
 
   BL pop_neon
 
@@ -411,27 +433,33 @@ safe_fcall_trampoline:
   MSR FPCR, X20
   MSR FPSR, X21
 
-  LDP X10, X11, [SP, #16]
-  LDP X12, X13, [SP, #32]
-  LDP X14, X15, [SP, #48]
-  LDP X16, X17, [SP, #64]
-  LDP X18, X19, [SP, #80]
-  LDP X20, X21, [SP, #96]
-  LDP X29, X30, [SP, #112]
-  LDP X8,  X9,  [SP], #128
+  LDP GP_REG(10), GP_REG(11), [PTR_REG(SP), #(PTR_SIZE * 2)]
+  LDP GP_REG(12), GP_REG(13), [PTR_REG(SP), #(PTR_SIZE * 4)]
+  LDP GP_REG(14), GP_REG(15), [PTR_REG(SP), #(PTR_SIZE * 6)]
+  LDP GP_REG(16), GP_REG(17), [PTR_REG(SP), #(PTR_SIZE * 8)]
+  LDP GP_REG(18), GP_REG(19), [PTR_REG(SP), #(PTR_SIZE * 10)]
+  LDP GP_REG(20), GP_REG(21), [PTR_REG(SP), #(PTR_SIZE * 12)]
+  LDP GP_REG(29), GP_REG(30), [PTR_REG(SP), #(PTR_SIZE * 14)]
+  LDP GP_REG(8),  GP_REG(9),  [PTR_REG(SP)], #(PTR_SIZE * 16)
 
   RET
 #endif
 
-.endfunc
+.Lfunc_end_safe_fcall_trampoline:
+.size   safe_fcall_trampoline, .Lfunc_end_safe_fcall_trampoline-.Lfunc_begin_safe_fcall_trampoline
+.cfi_endproc
 
-.global __try_memcpy_error
-.type __try_memcpy_error, %function
-.global __try_memcpy
-.type __try_memcpy, %function
+
+.global  __try_memcpy                             // -- Begin function __try_memcpy
+.p2align        2
+.type   __try_memcpy,@function
+.Lfunc_begin___try_memcpy:
+.cfi_startproc purecap
+
 
 __try_memcpy:
 #ifdef __arm__
+
   LDRB R3, [R1], #1
   STRB R3, [R0], #1
   SUB R2, #1
@@ -441,18 +469,38 @@ __try_memcpy_ret:
   MOV R0, #0
   BX LR
 
-__try_memcpy_error:
-  MOV R0, #-1
-  BX LR
 #elif __aarch64__
-  LDRB W3, [X1], #1
-  STRB W3, [X0], #1
+  LDRB W3, [PTR_REG(1)], #1
+  STRB W3, [PTR_REG(0)], #1
   SUB X2, X2, #1
   CBNZ X2, __try_memcpy
   MOV X0, #0
   RET
+#endif
+
+.Lfunc_end___try_memcpy:
+.size   __try_memcpy, .Lfunc_end___try_memcpy-.Lfunc_begin___try_memcpy
+.cfi_endproc
+
+.global  __try_memcpy_error                             // -- Begin function __try_memcpy_error
+.p2align        2
+.type   __try_memcpy_error,@function
+.Lfunc_begin___try_memcpy_error:
+.cfi_startproc purecap
+
 
 __try_memcpy_error:
+#ifdef __arm__
+
+  MOV R0, #-1
+  BX LR
+
+#elif __aarch64__
+
   MOV X0, #-1
   RET
+
 #endif
+.Lfunc_end___try_memcpy_error:
+.size   __try_memcpy_error, .Lfunc_end___try_memcpy_error-.Lfunc_begin___try_memcpy_error
+.cfi_endproc
