@@ -23,7 +23,7 @@
 #include <unistd.h>
 #ifndef MORELLOBSD
 #include <asm/unistd.h>
-#else
+#endif
 #include <string.h>
 
 #include "dbm.h"
@@ -523,7 +523,7 @@ uintptr_t signal_dispatcher(int i, siginfo_t *info, void *context) {
     if (pc >= cc_start && pc < cc_end) {
       int fragment_id = addr_to_fragment_id(current_thread, (uintptr_t)pc);
       dbm_code_cache_meta *bb_meta = &current_thread->code_cache_meta[fragment_id];
-      if (pc >= (uintptr_t)bb_meta->exit_branch_addr) {
+      if (pc >= (uintptr_t)bb_meta->) {
         thread_abort(current_thread);
       }
       unlink_fragment(fragment_id, pc);
