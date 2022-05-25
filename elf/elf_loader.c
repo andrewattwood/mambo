@@ -155,7 +155,7 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
     printf("Not a 32-bit ELF file\n");
     exit(EXIT_FAILURE);
   }
-
+//FIXME Need to check the machine type
   if (ehdr->e_machine != EM_MACHINE) {
     printf("Not compiled for ARM\n");
     exit(EXIT_FAILURE);
