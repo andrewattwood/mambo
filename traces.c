@@ -34,15 +34,25 @@
 #include "pie/pie-thumb-encoder.h"
 #include "pie/pie-arm-encoder.h"
 #elif __aarch64__
+
+#ifdef MORELLOBSD
+#include "pie/pie-a64c-encoder.h"
+#include "pie/pie-a64c-decoder.h"
+#include "pie/pie-a64c-field-decoder.h"
+#else
 #include "pie/pie-a64-encoder.h"
 #include "pie/pie-a64-decoder.h"
 #include "pie/pie-a64-field-decoder.h"
+#endif
 #define NINETEEN_BITS        0x7FFFF
 #define FOURTEEN_BITS        0x3FFF
 #define NOP_INSTRUCTION      0xD503201F
 #define THIRTY_TWO_KB        32 * 1024
 #define ONE_MEGABYTE         1024 * 1024
 #endif
+
+
+
 
 #ifdef DEBUG
   #define debug(...) fprintf(stderr, __VA_ARGS__)
@@ -129,6 +139,17 @@ uint32_t scan_trace(dbm_thread *thread_data, void *address, cc_type type, int *s
 bool is_instruction_position_independent(uint32_t * address) {
   int instruction = a64_decode(address);
   switch(instruction) {
+#ifdef MORELLOBSD
+    case A64C_B_BL:
+    case A64C_CBZ_CBNZ:
+    case A64C_B_COND:
+    case A64C_TBZ_TBNZ:
+    case A64C_BR:
+    case A64C_BLR:
+    case A64C_RET:
+    case A64C_LDR_LIT:
+    case A64C_ADR: // Includes ADRP
+#else
     case A64_B_BL:
     case A64_CBZ_CBNZ:
     case A64_B_COND:
@@ -138,6 +159,7 @@ bool is_instruction_position_independent(uint32_t * address) {
     case A64_RET:
     case A64_LDR_LIT:
     case A64_ADR: // Includes ADRP
+#endif
       return false;
     default:
       return true;
@@ -146,6 +168,27 @@ bool is_instruction_position_independent(uint32_t * address) {
 
 void get_cond_branch_attributes(uintptr_t inst_addr, uint32_t *mask, int64_t *max) {
   int instruction = a64_decode((uint32_t *)inst_addr);
+
+#ifdef MORELLOBSD
+  switch(instruction) {
+    case A64C_CBZ_CBNZ:
+    case A64C_B_COND:
+      *mask = NINETEEN_BITS;
+      *max = ONE_MEGABYTE;
+      break;
+    case A64C_TBZ_TBNZ:
+      *mask = FOURTEEN_BITS;
+      *max = THIRTY_TWO_KB;
+      break;
+    case A64C_B_BL:
+      printf("Direct branch (B or BL). (Not allowed)\n");
+      while(1);
+    default:
+      fprintf(stderr, "Linking instruction unknown at %p instruction %d\n",
+      (void *)inst_addr, instruction);
+      while(1);
+  }
+#else
   switch(instruction) {
     case A64_CBZ_CBNZ:
     case A64_B_COND:
@@ -164,8 +207,84 @@ void get_cond_branch_attributes(uintptr_t inst_addr, uint32_t *mask, int64_t *ma
       (void *)inst_addr, instruction);
       while(1);
   }
+
+#endif
+
+
+}
+#ifdef MORELLOBSD
+
+void patch_trace_branches(dbm_thread *thread_data, uint32_t *orig_branch, uintptr_t tpc) {
+  uint32_t *exit_address;
+  uint32_t sf, op, b5, b40, imm, rt, bit, cond;
+
+  int64_t new_offset = (int64_t)tpc - (int64_t)orig_branch;
+
+  int instruction = a64_decode(orig_branch);
+  switch(instruction) {
+    case A64C_CBZ_CBNZ:
+      a64_CBZ_CBNZ_decode_fields(orig_branch, &sf, &op, &imm, &rt);
+      // Check if new_offset fits
+      if (is_offset_within_range(new_offset, ONE_MEGABYTE)) {
+        a64_cbz_cbnz_helper(orig_branch, op, (uint64_t)tpc, sf, rt);
+        return;
+      } else {
+        exit_address = (uint32_t *)(sign_extend64(21, (imm << 2)) + (uint64_t) orig_branch);
+      }
+      break;
+    case A64C_B_COND:
+      a64_B_cond_decode_fields(orig_branch, &imm, &cond);
+      // Check if new_offset fits
+      if (is_offset_within_range(new_offset, ONE_MEGABYTE)) {
+        a64_b_cond_helper(orig_branch, (uint64_t)tpc, cond);
+        return;
+      } else {
+        exit_address = (uint32_t *)(sign_extend64(21, (imm << 2)) + (uint64_t) orig_branch);
+      }
+      break;
+    case A64C_TBZ_TBNZ:
+      a64_TBZ_TBNZ_decode_fields(orig_branch, &b5, &op, &b40, &imm, &rt);
+      // Check if new_offset fits
+      if (is_offset_within_range(new_offset, THIRTY_TWO_KB)) {
+        bit = (b5 << 5) | b40;
+        a64_tbz_tbnz_helper(orig_branch, op, (uint64_t)tpc, rt, bit);
+        return;
+      } else {
+        exit_address = (uint32_t *)(sign_extend64(16, imm << 2) + (uint64_t) orig_branch);
+      }
+      break;
+    case A64C_B_BL:
+      // Patch the branch
+      a64_b_helper((uint32_t *)orig_branch, tpc);
+      return;
+      break;
+    default:
+        fprintf(stderr, "[install_trace] Linking instruction unknown at %p instruction %d\n",
+                        orig_branch, instruction);
+        while(1);
+  }
+  /*
+   * +----------------+ Exit
+   * | NOP            | These NOPs are here to avoid the core fetching more
+   * | NOP            | than one branch in the same cycle
+   * | branch to trace| Also, to maintain the branch address location in all
+   * | NOP            | the exits stubs
+   * +----------------+
+   */
+  *exit_address = NOP_INSTRUCTION;
+  exit_address++;
+  *exit_address = NOP_INSTRUCTION;
+  exit_address++;
+
+  // Update metadata of the exit
+  int const fragment_id = addr_to_fragment_id(thread_data, (uintptr_t)exit_address);
+  thread_data->code_cache_meta[fragment_id].branch_taken_addr = tpc;
+
+  a64_b_helper((uint32_t *)exit_address, tpc);
+  __clear_cache((void *)(exit_address - 3), (void *)(exit_address + 1));
 }
 
+#else
 void patch_trace_branches(dbm_thread *thread_data, uint32_t *orig_branch, uintptr_t tpc) {
   uint32_t *exit_address;
   uint32_t sf, op, b5, b40, imm, rt, bit, cond;
@@ -235,6 +354,8 @@ void patch_trace_branches(dbm_thread *thread_data, uint32_t *orig_branch, uintpt
   a64_b_helper((uint32_t *)exit_address, tpc);
   __clear_cache((void *)(exit_address - 3), (void *)(exit_address + 1));
 }
+#endif
+
 #endif
 
 void install_trace(dbm_thread *thread_data) {

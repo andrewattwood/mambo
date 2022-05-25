@@ -25,7 +25,13 @@
 #include <pthread.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#ifdef MORELLOBSD
+#include <sys/sched.h>
+#include <sys/sys/syscall.h>
+#else
 #include <linux/sched.h>
+#endif
+
 #include <assert.h>
 #include <limits.h>
 #include <string.h>
@@ -63,9 +69,16 @@ void *dbm_start_thread_pth(void *ptr, void *mambo_sp) {
   assert(thread_data->clone_args->child_stack);
   current_thread = thread_data;
   current_thread->mambo_sp = mambo_sp;
-
+#ifdef MORELLOBSD
+  //struct pthread * pthreadid = pthread_self();
+  pid_t tid = *((int *)pthread_self());
+#else
   pid_t tid = syscall(__NR_gettid);
+#endif
+
   thread_data->tid = tid;
+
+  /* FIXME This is a test to see if needed on freebsd
   if (thread_data->clone_args->flags & CLONE_PARENT_SETTID) {
     *thread_data->clone_args->ptid = tid;
   }
@@ -76,6 +89,8 @@ void *dbm_start_thread_pth(void *ptr, void *mambo_sp) {
 		syscall(__NR_set_tid_address, thread_data->clone_args->ctid);
   }
   thread_data->tls = thread_data->clone_args->tls;
+  */
+
 
   // Copy the parent's saved register values to the child's stack
 #ifdef __arm__
@@ -212,6 +227,7 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
   } else {
 #endif
 
+/*
   switch(syscall_no) {
     case __NR_brk:
       args[0] = emulate_brk(args[0]);
@@ -328,7 +344,7 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
     }
     /* Remove the execute permission from application mappings. At this point, this mostly acts
        as a safeguard in case a translation bug causes a branch to unmodified application code.
-       Page permissions happen to be passed in the third argument both for mmap and mprotect. */
+       Page permissions happen to be passed in the third argument both for mmap and mprotect. *//*
 #ifdef __arm__
     case __NR_mmap2:
 #endif
@@ -338,7 +354,7 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
     case __NR_mprotect: {
       uintptr_t syscall_ret, prot = args[2];
 
-      /* Ensure that code pages are readable by the code scanner. */
+      /* Ensure that code pages are readable by the code scanner. *//*
       if (args[2] & PROT_EXEC) {
         if (!(args[2] & PROT_READ)) {
           debug("MAMBO: adding read permission to executable mapping at 0x%" PRIxPTR "\n", args[0]);
@@ -433,7 +449,7 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
          to the rt_sigreturn wrapper set by the kernel in the LR, so we need to
          override it here. See linux/arm/kernel/signal.c for the difference
          between the two types of signal handlers.
-      */
+      *//*
       args[7] = __NR_rt_sigreturn;
       app_sp += 64;
 #elif __aarch64__
@@ -458,7 +474,7 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
     case __ARM_NR_cacheflush:
       debug("cache flush\n");
       /* Returning to the calling BB is potentially unsafe because the remaining
-         contents of the BB or other basic blocks it is linked against could be stale */
+         contents of the BB or other basic blocks it is linked against could be stale *//*
       flush_code_cache(thread_data);
       break;
     case __ARM_NR_set_tls:
@@ -489,7 +505,7 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
   if (do_syscall) {
     thread_data->status = THREAD_SYSCALL;
   }
-
+*/
   return do_syscall;
 }
 
@@ -500,20 +516,20 @@ void syscall_handler_post(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_
     thread_abort(thread_data);
   }
   thread_data->status = THREAD_RUNNING;
-
+/*
   switch(syscall_no) {
     case __NR_clone:
       debug("r0 (tid): %" PRIdPTR "\n", args[0]);
       if (args[0] == 0) { // the child
         assert(!thread_data->clone_vm);
         /* Without CLONE_VM, the child runs in a separate memory space,
-           no synchronisation is needed.*/
+           no synchronisation is needed.*//*
         thread_data->tls = thread_data->child_tls;
         reset_process(thread_data);
       }
       break;
   }
-
+*/
 #ifdef PLUGINS_NEW
   mambo_context ctx;
 

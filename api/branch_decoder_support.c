@@ -31,8 +31,13 @@
   #include "../pie/pie-arm-field-decoder.h"
 #endif
 #ifdef __aarch64__
+#ifdef MORELLOBSD
+  #include "../pie/pie-a64c-decoder.h"
+  #include "../pie/pie-a64c-field-decoder.h"
+#else
   #include "../pie/pie-a64-decoder.h"
   #include "../pie/pie-a64-field-decoder.h"
+#endif
 #endif
 
 #ifdef PLUGINS_NEW

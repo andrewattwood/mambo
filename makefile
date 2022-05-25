@@ -52,7 +52,7 @@ LDFLAGS+=-static -ldl
 LIBS=-lelf -lpthread -lz
 HEADERS=*.h makefile
 ifeq ($(MORELLO), pure-freebsd)
-	INCLUDES=-I$(CHERIOUTPUT)rootfs-morello-purecap/usr/include -I.
+	INCLUDES=-I$(CHERIOUTPUT)rootfs-morello-purecap/usr/include -I$(FREEBSD) -I. 
 else
 	INCLUDES=-I/usr/include/libelf -I.
 endif
@@ -67,11 +67,11 @@ ARCH=$(shell $(CC) -dumpmachine | awk -F '-' '{print $$1}')
 ifdef $(MORELLO)
 	HEADERS += api/emit_a64.h
 	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0x7000000000)
-	PIE += pie/pregenerated/pie-a64-field-decoder.o pie/pregenerated/pie-a64-encoder.o pie/pregenerated/pie-a64-decoder.o
-	SOURCES += arch/aarch64/dispatcher_aarch64.S arch/aarch64/dispatcher_aarch64.c
-	SOURCES += arch/aarch64/scanner_a64.c
-	SOURCES += api/emit_a64.c
-endif
+	PIE += pie/pregenerated/pie-a64c-field-decoder.o pie/pregenerated/pie-a64c-encoder.o pie/pregenerated/pie-a64c-decoder.o
+	SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
+	SOURCES += arch/aarch64c/scanner_a64c.c
+	SOURCES += api/emit_a64c.c
+elif
 ifeq ($(findstring arm, $(ARCH)), arm)
 	CFLAGS += -march=armv7-a -mfpu=neon
 	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0xa8000000)
@@ -91,7 +91,7 @@ ifeq ($(ARCH),aarch64)
 	SOURCES += arch/aarch64/scanner_a64.c
 	SOURCES += api/emit_a64.c
 endif
-
+endif
 
 ifdef PLUGINS
 	CFLAGS += -DPLUGINS_NEW

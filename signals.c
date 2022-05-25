@@ -37,9 +37,16 @@
 #include "pie/pie-arm-field-decoder.h"
 #endif
 #ifdef __aarch64__
+#ifdef MORELLOBSD
+#include "pie/pie-a64c-encoder.h"
+#include "pie/pie-a64c-decoder.h"
+#include "pie/pie-a64c-field-decoder.h"
+#else
 #include "pie/pie-a64-encoder.h"
 #include "pie/pie-a64-decoder.h"
 #include "pie/pie-a64-field-decoder.h"
+#endif
+
 #endif
 
 #define self_send_signal_offset        ((uintptr_t)send_self_signal - (uintptr_t)&start_of_dispatcher_s)
@@ -48,14 +55,16 @@
 #define SIGNAL_TRAP_IB (0x94)
 #define SIGNAL_TRAP_DB (0x95)
 
+/*
 #ifdef __arm__
   #define pc_field uc_mcontext.arm_pc
   #define sp_field uc_mcontext.arm_sp
 #elif __aarch64__
+
   #define pc_field uc_mcontext.pc
   #define sp_field uc_mcontext.sp
 #endif
-
+*/
 
 #ifdef MORELLOBSD
   #define _NSIG NSIG
@@ -78,13 +87,22 @@ void install_system_sig_handlers() {
 }
 
 int deliver_signals(uintptr_t spc, self_signal *s) {
+ 
   uint64_t sigmask;
 
   if (global_data.exit_group) {
     thread_abort(current_thread);
   }
 
-  int ret = syscall(__NR_rt_sigprocmask, 0, NULL, &sigmask, sizeof(sigmask));
+
+#ifdef MORELLOBSD
+  int ret = sigprocmask( SIG_BLOCK,  NULL, (sigset_t *)&sigmask);
+#else
+  int ret = syscall(__NR_rt_sigprocmask  , 0, NULL, &sigmask, sizeof(sigmask));
+#endif
+
+/*
+
   assert (ret == 0);
 
   for (int i = 0; i < _NSIG; i++) {
@@ -97,7 +115,7 @@ int deliver_signals(uintptr_t spc, self_signal *s) {
       return 1;
     }
   }
-
+*/
   return 0;
 }
 
@@ -117,7 +135,7 @@ typedef int (*inst_decoder)(void *);
   #define write_trap(code) a64_HVC((uint32_t **)&write_p, (code)); write_p += 4;
   #define TRAP_INST_TYPE (A64_HVC)
 #endif
-
+/*
 bool unlink_indirect_branch(dbm_code_cache_meta *bb_meta, void **o_write_p) {
   int br_inst_type, trap_inst_type;
   inst_decoder decoder;
@@ -152,7 +170,9 @@ bool unlink_indirect_branch(dbm_code_cache_meta *bb_meta, void **o_write_p) {
   *o_write_p = write_p;
   return true;
 }
+*/
 
+/*
 int get_direct_branch_exit_trap_sz(dbm_code_cache_meta *bb_meta, int fragment_id) {
   int sz;
   switch(bb_meta->exit_branch_type) {
@@ -185,7 +205,8 @@ int get_direct_branch_exit_trap_sz(dbm_code_cache_meta *bb_meta, int fragment_id
   }
   return sz;
 }
-
+*/
+/*
 bool unlink_direct_branch(dbm_code_cache_meta *bb_meta, void **o_write_p, int fragment_id, uintptr_t pc) {
   int offset = 0;
   bool __attribute__((unused)) is_thumb = false;
@@ -218,7 +239,7 @@ bool unlink_direct_branch(dbm_code_cache_meta *bb_meta, void **o_write_p, int fr
     } // if (bb_meta->branch_cache_status != 0)
   } else {
     /* It's already setting up a call to the dispatcher. Ensure that the
-       fragment is not supposed to be linked */
+       fragment is not supposed to be linked *//*
     assert((bb_meta->branch_cache_status & BOTH_LINKED) == 0);
     return false;
   }
@@ -226,7 +247,9 @@ bool unlink_direct_branch(dbm_code_cache_meta *bb_meta, void **o_write_p, int fr
   *o_write_p = write_p;
   return true;
 }
+*/
 
+/*
 void unlink_fragment(int fragment_id, uintptr_t pc) {
   dbm_code_cache_meta *bb_meta;
 
@@ -287,7 +310,9 @@ void unlink_fragment(int fragment_id, uintptr_t pc) {
 
   __clear_cache(start_addr, write_p);
 }
+*/
 
+/*
 void translate_delayed_signal_frame(ucontext_t *cont) {
   uintptr_t *sp = (uintptr_t *)cont->sp_field;
 #ifdef __arm__
@@ -301,7 +326,7 @@ void translate_delayed_signal_frame(ucontext_t *cont) {
          R0
          TPC
          SPC
-  */
+  *//*
   cont->uc_mcontext.arm_r7 = sp[0];
   cont->uc_mcontext.arm_r1 = sp[1];
   cont->uc_mcontext.arm_r2 = sp[2];
@@ -314,7 +339,7 @@ void translate_delayed_signal_frame(ucontext_t *cont) {
     TPC, SPC
     X2, X8
     X0, X1
-  */
+  *//*
   cont->uc_mcontext.regs[x8] = sp[3];
   cont->uc_mcontext.regs[x2] = sp[2];
   cont->uc_mcontext.pc = sp[1];
@@ -325,7 +350,8 @@ void translate_delayed_signal_frame(ucontext_t *cont) {
 
   cont->sp_field = (uintptr_t)sp;
 }
-
+*/
+/*
 void translate_svc_frame(ucontext_t *cont) {
   uintptr_t *sp = (uintptr_t *)cont->sp_field;
 #ifdef __arm__
@@ -362,7 +388,7 @@ void translate_svc_frame(ucontext_t *cont) {
 #endif
   cont->sp_field = (uintptr_t)sp;
 }
-
+*/
 #define PSTATE_N (1 << 31)
 #define PSTATE_Z (1 << 30)
 #define PSTATE_C (1 << 29)
@@ -408,6 +434,7 @@ bool interpret_condition(uint32_t pstate, mambo_cond cond) {
 }
 
 #ifdef __aarch64__
+/*
 bool interpret_cbz(ucontext_t *cont, dbm_code_cache_meta *bb_meta) {
   int reg = (bb_meta->rn) & 0x1F;
   uint64_t val = cont->uc_mcontext.regs[reg];
@@ -425,6 +452,7 @@ bool interpret_tbz(ucontext_t *cont, dbm_code_cache_meta *bb_meta) {
 
   return is_taken ^ bb_meta->branch_condition;
 }
+*/
 #endif
 
 #ifdef __arm__
@@ -451,7 +479,7 @@ void restore_exit(dbm_thread *thread_data, int fragment_id, void **o_write_p) {
 
   *o_write_p = write_p;
 }
-
+/*
 void restore_ihl_regs(ucontext_t *cont) {
   uintptr_t *sp = (uintptr_t *)cont->sp_field;
 
@@ -466,7 +494,9 @@ void restore_ihl_regs(ucontext_t *cont) {
 
   cont->sp_field = (uintptr_t)sp;
 }
+*/
 
+/*
 void sigret_dispatcher_call(dbm_thread *thread_data, ucontext_t *cont, uintptr_t target) {
   uintptr_t *sp = (uintptr_t *)cont->context_sp;
 
@@ -491,7 +521,7 @@ void sigret_dispatcher_call(dbm_thread *thread_data, ucontext_t *cont, uintptr_t
 
   cont->context_sp = (uintptr_t)sp;
 }
-
+*/
 #ifdef __arm__
   #define restore_ihl_inst(addr)  if (is_thumb) { \
                                     thumb_bx16((uint16_t **)&addr, r6); \
@@ -511,7 +541,7 @@ void sigret_dispatcher_call(dbm_thread *thread_data, ucontext_t *cont, uintptr_t
 uintptr_t signal_dispatcher(int i, siginfo_t *info, void *context) {
   uintptr_t handler = 0;
   bool deliver_now = false;
-
+/*
   assert(i >= 0 && i < _NSIG);
   ucontext_t *cont = (ucontext_t *)context;
 
@@ -638,7 +668,7 @@ uintptr_t signal_dispatcher(int i, siginfo_t *info, void *context) {
      The SPC of the instruction is unknown, so sigreturning to addresses derived
      from the PC value in the signal frame is not supported.
      We mangle the PC in the context to hopefully trap such attempts.
-  */
+  *//*
   if (i == SIGSEGV || i == SIGBUS || i == SIGFPE || i == SIGTRAP || i == SIGILL || i == SIGSYS) {
     handler = global_data.signal_handlers[i];
 
@@ -669,6 +699,6 @@ uintptr_t signal_dispatcher(int i, siginfo_t *info, void *context) {
 
   atomic_increment_int(&current_thread->pending_signals[i], 1);
   atomic_increment_u32(&current_thread->is_signal_pending, 1);
-
+*/
   return handler;
 }

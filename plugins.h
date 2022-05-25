@@ -27,9 +27,17 @@
   #include "pie/pie-thumb-field-decoder.h"
   #include "pie/pie-thumb-decoder.h"
 #elif __aarch64__
+#ifdef MORELLOBSD
+  #include "api/emit_a64c.h"
+  #include "pie/pie-a64c-field-decoder.h"
+  #include "pie/pie-a64c-decoder.h"
+
+#else
   #include "api/emit_a64.h"
   #include "pie/pie-a64-field-decoder.h"
   #include "pie/pie-a64-decoder.h"
+#endif
+
 #endif
 #include "api/helpers.h"
 #include "scanner_common.h"
