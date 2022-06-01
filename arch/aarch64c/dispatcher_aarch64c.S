@@ -18,6 +18,23 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+
+#ifdef __aarch64__ 
+  #ifdef MORELLOBSD
+    #define PTR_REG(n)	c##n
+		#define GP_REG(n)	PTR_REG(n)
+    #define GP_REG_W(n)	PTR_REG(n)
+		#define SP_REG		csp
+		#define PTR_SIZE	__SIZEOF_POINTER__
+  #else
+    #define PTR_REG(n)	x##n
+		#define GP_REG(n)	PTR_REG(n)
+    #define GP_REG_W(n)	w##n
+		#define SP_REG		sp
+		#define PTR_SIZE	8
+  #endif
+#endif
+
 .global start_of_dispatcher_s
 start_of_dispatcher_s:
 
@@ -63,59 +80,59 @@ pop_neon:
 
 .global push_x4_x21
 push_x4_x21:
-  STP  X4,  X5, [SP, #-144]!
-  STP  X6,  X7, [SP, #16]
-  STP  X8,  X9, [SP, #32]
-  STP X10, X11, [SP, #48]
-  STP X12, X13, [SP, #64]
-  STP X14, X15, [SP, #80]
-  STP X16, X17, [SP, #96]
-  STP X18, X19, [SP, #112]
-  STP X20, X21, [SP, #128]
+  STP  GP_REG(4),  GP_REG(5), [SP_REG(SP), #-(18 * PTR_SIZE)]!
+  STP  GP_REG(6),  GP_REG(7), [SP_REG(SP), #(2 * PTR_SIZE)]
+  STP  GP_REG(8),  GP_REG(9), [SP_REG(SP), #(4 * PTR_SIZE)]
+  STP GP_REG(10), GP_REG(11), [SP_REG(SP), #(6 * PTR_SIZE)]
+  STP GP_REG(12), GP_REG(13), [SP_REG(SP), #(8 * PTR_SIZE)]
+  STP GP_REG(14), GP_REG(15), [SP_REG(SP), #(10 * PTR_SIZE)]
+  STP GP_REG(16), GP_REG(17), [SP_REG(SP), #(12 * PTR_SIZE)]
+  STP GP_REG(18), GP_REG(19), [SP_REG(SP), #(14 * PTR_SIZE)]
+  STP GP_REG(20), GP_REG(21), [SP_REG(SP), #(16 * PTR_SIZE)]
   RET
 
 .global pop_x4_x21
 pop_x4_x21:
-  LDP  X6,  X7, [SP, #16]
-  LDP  X8,  X9, [SP, #32]
-  LDP X10, X11, [SP, #48]
-  LDP X12, X13, [SP, #64]
-  LDP X14, X15, [SP, #80]
-  LDP X16, X17, [SP, #96]
-  LDP X18, X19, [SP, #112]
-  LDP X20, X21, [SP, #128]
-  LDP  X4,  X5, [SP], #144
+  LDP  GP_REG(6),  GP_REG(7), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDP  GP_REG(8),  GP_REG(9), [SP_REG(SP), #(4 * PTR_SIZE)]
+  LDP GP_REG(10), GP_REG(11), [SP_REG(SP), #(6 * PTR_SIZE)]
+  LDP GP_REG(12), GP_REG(13), [SP_REG(SP), #(8 * PTR_SIZE)]
+  LDP GP_REG(14), GP_REG(15), [SP_REG(SP), #(10 * PTR_SIZE)]
+  LDP GP_REG(16), GP_REG(17), [SP_REG(SP), #(12 * PTR_SIZE)]
+  LDP GP_REG(18), GP_REG(19), [SP_REG(SP), #(14 * PTR_SIZE)]
+  LDP GP_REG(20), GP_REG(21), [SP_REG(SP), #(16 * PTR_SIZE)]
+  LDP  GP_REG(4),  GP_REG(5), [SP_REG(SP)], #(18 * PTR_SIZE)
   RET
 
 .global dispatcher_trampoline
 dispatcher_trampoline:
   // PUSH all general purpose registers but X0, X1
   // X0 and X1 are pushed by the exit stub
-  STP  X2,  X3, [SP, #-48]!
-  STP X29, X30, [SP, #16]
-  STR  X0,      [SP, #40]
+  STP  GP_REG(2),  GP_REG(3), [SP_REG(SP), #-(6 * PTR_SIZE)]!
+  STP GP_REG(29), GP_REG(30), [SP_REG(SP), #(2 * PTR_SIZE)]
+  STR  GP_REG(0),      [SP_REG(SP), #(5 * PTR_SIZE)]
   BL push_x4_x21
 
   MRS X19, NZCV
   MRS X20, FPCR
   MRS X21, FPSR
-
-  ADD X2, SP, #176
-  LDR X3, disp_thread_data
-  LDR X9, dispatcher_addr
+//FIXME - Check the add 176  
+  ADD GP_REG(2), SP_REG(SP), #(22 * PTR_SIZE)
+  LDR GP_REG(3), disp_thread_data
+  LDR GP_REG(9), dispatcher_addr
   BL push_neon
 
-  BLR X9
+  BLR GP_REG(9) // BLR to dispatcher()
 
   BL pop_neon
-  MSR NZCV, X19
-  MSR FPCR, X20
-  MSR FPSR, X21
+  MSR NZCV, GP_REG(19)
+  MSR FPCR, GP_REG(20)
+  MSR FPSR, GP_REG(21)
 
   BL pop_x4_x21
-  LDP X29, X30, [SP, #16]
-  LDP  X0,  X1, [SP, #32]
-  LDP  X2,  X3, [SP], #48
+  LDP GP_REG(29), GP_REG(30), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDP  GP_REG(0),  GP_REG(1), [SP_REG(SP), #(4 * PTR_SIZE)]
+  LDP  GP_REG(2),  GP_REG(3), [SP_REG(SP)], #(6 * PTR_SIZE)
 
   B checked_cc_return
 
@@ -129,24 +146,24 @@ trace_head_incr:
    * X30 = Address to return on the code cache.
    * X2 = address of the counter
    */
-  STP      X2,  X3, [SP, #-16]!
+  STP      GP_REG(2),  GP_REG(3), [SP_REG(SP), #-(2 * PTR_SIZE)]!
   // Leave space for storing the address of the counter to X2
   NOP  // MOVZ X2, #address_first_half_word
   NOP  // MOVK X2, #address_second_half_word, lsl #16
   NOP  // MOVK X2, #address_third_half_word,  lsl #32
   NOP  // MOVK X2, #address_fourth_half_word, lsl #48
-  LDRB W3, [X2, X1]
+  LDRB W3, [GP_REG(2), X1]
   SUB  W3,  W3, #1
-  STRB W3, [X2, X1]
+  STRB W3, [GP_REG(2), X1]
   CBZ  W3,  create_trace_trampoline
-  LDP  X2,  X3, [SP], #16
+  LDP  P_REG(2),  P_REG(3), [SP_REG(SP)], #(2 * PTR_SIZE)
   RET
 
 create_trace_trampoline:
-  LDP X2, X30, [SP, #16]
-  STP X0,  X2, [SP, #16]
+  LDP GP_REG(2), GP_REG(30), [SP_REG(SP), #(2 * PTR_SIZE)]
+  STP GP_REG(0),  GP_REG(2), [SP_REG(SP), #(2 * PTR_SIZE)]
 
-  STP X29, X30, [SP, #-32]!
+  STP GP_REG(29), GP_REG(30), [SP_REG(SP), #-(4 * PTR_SIZE)]!
   BL push_x4_x21
 
   MRS X19, NZCV
@@ -158,12 +175,12 @@ create_trace_trampoline:
    *              uint32_t      bb_source,     X1
    *              cc_addr_pair *trace_addr)    X2
    */
-  ADD X2, SP, #160
-  LDR X0, disp_thread_data
-  LDR X3, =create_trace
+  ADD GP_REG(2), SP_REG(SP), #(20 * PTR_SIZE)
+  LDR GP_REG(0), disp_thread_data
+  LDR GP_REG(3), =create_trace
   BL push_neon
 
-  BLR X3
+  BLR GP_REG(3)
 
   BL pop_neon
   MSR NZCV, X19
@@ -179,9 +196,9 @@ create_trace_trampoline:
    *      | X0  | X1  | SP + 48 (Pushed by the basic block
    *                             and popped in the newly created trace)
    */
-  LDP  X0,  X1, [SP, #16]
-  LDP  X2,  X3, [SP, #32]
-  LDP X29, X30, [SP], #48
+  LDP  GP_REG(0),  GP_REG(1), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDP  GP_REG(2),  GP_REG(3), [SP_REG(SP), #(4 * PTR_SIZE)]
+  LDP GP_REG(29), GP_REG(30), [SP_REG(SP)], #(6 * PTR_SIZE)
 
   B checked_cc_return
 
@@ -189,47 +206,47 @@ create_trace_trampoline:
 .global syscall_wrapper
 .global syscall_wrapper_svc
 syscall_wrapper:
-  STP X30, X29, [SP, #-16]!
+  STP GP_REG(30), GP_REG(29), [SP_REG(SP), #-(2 * PTR_SIZE)]!
   BL push_x4_x21
-  STP X0, X1, [SP, #-32]!
-  STP X2, X3, [SP, #16]
+  STP GP_REG(0), GP_REG(1), [SP_REG(SP), #-(4 * PTR_SIZE)]!
+  STP GP_REG(2), GP_REG(3), [SP_REG(SP), #(2 * PTR_SIZE)]
   BL push_neon
 
   MRS X19, NZCV
   MRS X20, FPCR
   MRS X21, FPSR
 
-  MOV X0, X8
-  ADD X1, SP, #512
-  MOV X2, X29
-  LDR X3, disp_thread_data
-  LDR X4, syscall_handler_pre_addr
+  MOV GP_REG(0), GP_REG(8)
+  ADD GP_REG(1), SP_REG(SP), #(8 * PTR_SIZE)
+  MOV GP_REG(2), GP_REG(29)
+  LDR GP_REG(3), disp_thread_data
+  LDR GP_REG(4), syscall_handler_pre_addr
 
-  BLR X4
+  BLR GP_REG(4)
 
-  CBZ X0, s_w_r
+  CBZ GP_REG(0), s_w_r
 
-  ADD X9, SP, #512
-  LDP X0, X1, [X9, #0]
-  LDP X2, X3, [X9, #16]
-  LDP X4, X5, [X9, #32]
-  LDP X6, X7, [X9, #48]
-  LDR X8,     [X9, #64]
+  ADD GP_REG(9), SP_REG(SP), #(64 * PTR_SIZE)
+  LDP GP_REG(0), GP_REG(1), [GP_REG(9), #0]
+  LDP GP_REG(2), GP_REG(3), [GP_REG(9), #(2 * PTR_SIZE)]
+  LDP GP_REG(4), GP_REG(5), [GP_REG(9), #(4 * PTR_SIZE)]
+  LDP GP_REG(6), GP_REG(7), [GP_REG(9), #(6 * PTR_SIZE)]
+  LDR GP_REG(8),     [GP_REG(9), #(8 * PTR_SIZE)]
 
   // Balance the stack on rt_sigreturn, which doesn't return here
   CMP X8, #0x8b
   BNE svc
-  ADD SP, SP, #(64 + 144 + 512)
+  ADD GP_REG(SP), GP_REG(SP), #((8 * PTR_SIZE) + (18 * PTR_SIZE) + (64 * PTR_SIZE))
 
 svc: SVC 0
 syscall_wrapper_svc:
-  ADD X1, SP, #512
-  STR X0, [X1, #0]
-  MOV X0, X8
-  MOV X2, X29
-  LDR X3, disp_thread_data
-  LDR X4, syscall_handler_post_addr
-  BLR X4
+  ADD GP_REG(1), SP_REG(SP), #(64 * PTR_SIZE)
+  STR GP_REG(0), [SP_REG(1), #0]
+  MOV GP_REG(0), GP_REG(8)
+  MOV GP_REG(2), GP_REG(29)
+  LDR GP_REG(3), disp_thread_data
+  LDR GP_REG(4), syscall_handler_post_addr
+  BLR GP_REG(4)
 
 s_w_r:
   BL pop_neon
@@ -237,13 +254,13 @@ s_w_r:
   MSR FPCR, X20
   MSR FPSR, X21
 
-  LDP X2, X3, [SP, #16]
-  LDP X0, X1, [SP], #32
+  LDP GP_REG(2), GP_REG(3), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDP GP_REG(0), GP_REG(1), [SP_REG(SP)], #(4 * PTR_SIZE)
   BL pop_x4_x21
-  LDP X29, X30, [SP, #16]
-  STP X0, X1, [SP, #16]
-  LDP X0, X1, [SP], #16
-
+  LDP GP_REG(29), GP_REG(30), [SP_REG(SP), #(2 * PTR_SIZE)]
+  STP GP_REG(0), GP_REG(1), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDP GP_REG(0), GP_REG(1), [SP_REG(SP)], #(2 * PTR_SIZE)
+//FIXME BR X0 ignore
   B checked_cc_return
 
 syscall_handler_pre_addr: .quad syscall_handler_pre
@@ -256,19 +273,19 @@ disp_thread_data: .quad 0
 
 .global checked_cc_return
 checked_cc_return:
-  STR X2, [SP, #-16]!
-  LDR X2, th_is_pending_ptr
-  LDR W2, [X2]
+  STR GP_REG(2), [SP_REG(SP), #-(2 * PTR_SIZE)]!
+  LDR GP_REG(2), th_is_pending_ptr
+  LDR W2, [GP_REG(2)]
   CBNZ W2, deliver_signals_trampoline
-  LDR X2, [SP], #16
-  BR X0
+  LDR GP_REG(2), [SP_REG(SP)], #(2 * PTR_SIZE)
+  BR GP_REG(0)
 deliver_signals_trampoline:
-  STP X0, X1, [SP, #-16]!
-  MOV X0, X1 // set the SPC argument
+  STP GP_REG(0), GP_REG(1), [SP_REG(SP), #-(2 * PTR_SIZE)]!
+  MOV GP_REG(0), GP_REG(1) // set the SPC argument
 
-  STR X3, [SP, #-64]!
-  STP X29, X30, [SP, #16]
-  ADD X1, SP, #32
+  STR GP_REG(3), [SP_REG(SP), #-(8 * PTR_SIZE)]!
+  STP GP_REG(29), GP_REG(30), [SP_REG(SP), #(2 * PTR_SIZE)]
+  ADD GP_REG(1), SP_REG(SP), #(4 * PTR_SIZE)
   BL push_x4_x21
   BL push_neon
 
@@ -280,8 +297,8 @@ deliver_signals_trampoline:
   CMP X0, X2
   BEQ .
 
-  LDR X3, =deliver_signals
-  BLR X3
+  LDR GP_REG(3), =deliver_signals
+  BLR GP_REG(3)
 
   MSR NZCV, X19
   MSR FPCR, X20
@@ -289,15 +306,15 @@ deliver_signals_trampoline:
 
   BL pop_neon
   BL pop_x4_x21
-  LDP X29, X30, [SP, #16]
-  LDR X3, [SP], #32
+  LDP GP_REG(29), GP_REG(30), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDR GP_REG(3), [SP_REG(SP)], #(4 * PTR_SIZE)
 
   CBZ X0, abort_self_signal
 
-  LDR X2, [SP, #16]
-  LDP X0, X1, [SP], #32
+  LDR GP_REG(2), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDP GP_REG(0), GP_REG(1), [SP_REG(SP)], #(4 * PTR_SIZE)
 
-  STR X8, [SP, #24]
+  STR GP_REG(8), [SP_REG(SP), #(3 * PTR_SIZE)]
 
   /*
     TPC, SPC
@@ -305,17 +322,17 @@ deliver_signals_trampoline:
     X0, X1
   */
 r:
-  MOV X8, #131
+  MOV GP_REG(8), #131
   SVC 0
 send_self_signal:
-  LDP X2, X8, [SP, #16]
-  LDR X0, [SP], #32
+  LDP GP_REG(2), GP_REG(8), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDR GP_REG(0), [SP_REG(SP)], #(4 * PTR_SIZE)
   BR X0
 abort_self_signal:
-  ADD SP, SP, #32
-  LDR X2, [SP, #16]
-  LDR X0, [SP], #32
-  BR X0
+  ADD SP_REG(SP), SP_REG(SP), #(4 * PTR_SIZE)
+  LDR GP_REG(2), [SP_REG(SP), #(2 * PTR_SIZE)]
+  LDR GP_REG(0), [SP_REG(SP)], #(4 * PTR_SIZE)
+  BR GP_REG(0)
 
 .global th_is_pending_ptr
 th_is_pending_ptr: .quad 0

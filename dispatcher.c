@@ -28,9 +28,16 @@ void dispatcher_aarch32(dbm_thread *thread_data, uint32_t source_index,
                         branch_type exit_type, uintptr_t target,
                         uintptr_t block_address);
 #elif __aarch64__
+#ifdef MORELLOBSD
+void dispatcher_aarch64c(dbm_thread *thread_data, uint32_t source_index,
+                        branch_type exit_type, uintptr_t target,
+                        uintptr_t block_address);
+#else
 void dispatcher_aarch64(dbm_thread *thread_data, uint32_t source_index,
                         branch_type exit_type, uintptr_t target,
                         uintptr_t block_address);
+#endif
+
 #endif
 
 #ifdef DEBUG
@@ -85,7 +92,14 @@ void dispatcher(const uintptr_t target, const uint32_t source_index,
                      *next_addr);
 #endif
 #ifdef __aarch64__
+
+#ifdef MORELLOBSD
+  dispatcher_aarch64c(thread_data, source_index, source_branch_type, target,
+                     *next_addr);
+#else
   dispatcher_aarch64(thread_data, source_index, source_branch_type, target,
                      *next_addr);
+#endif
+
 #endif
 }

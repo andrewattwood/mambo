@@ -57,7 +57,7 @@ void insert_cond_exit_branch(dbm_code_cache_meta *bb_meta, void **o_write_p, int
   *o_write_p = write_p;
 }
 
-void dispatcher_aarch64(dbm_thread *thread_data, uint32_t source_index, branch_type exit_type,
+void dispatcher_aarch64c(dbm_thread *thread_data, uint32_t source_index, branch_type exit_type,
                         uintptr_t target, uintptr_t block_address) {
   uint32_t *branch_addr;
   bool is_taken;

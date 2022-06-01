@@ -545,7 +545,7 @@ void a64_inline_hash_lookup(dbm_thread *thread_data, int basic_block, uint32_t *
   *o_write_p = write_p;
 }
 
-size_t scan_a64(dbm_thread *thread_data, uint32_t *read_address,
+size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
                 int basic_block, cc_type type, uint32_t *write_p) {
   bool stop = false;
 

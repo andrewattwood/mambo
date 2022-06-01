@@ -262,7 +262,7 @@ sigret:
   BR GP_REG(0)
 sigret: /*  139 is obsolete 4.2 sigreturn */
   ADD PTR_REG(SP), PTR_REG(SP), #(PTR_SIZE * 2)
-  MOV X8, #139
+  MOV PTR_REG(X8), #139
   SVC 0
 #endif
 
