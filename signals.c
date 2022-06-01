@@ -455,6 +455,8 @@ bool interpret_tbz(ucontext_t *cont, dbm_code_cache_meta *bb_meta) {
 */
 #endif
 
+
+/*
 #ifdef __arm__
   #define direct_branch(write_p, target, cond)  if (is_thumb) { \
                                                   thumb_b32_helper((write_p), (target)); \
@@ -479,6 +481,7 @@ void restore_exit(dbm_thread *thread_data, int fragment_id, void **o_write_p) {
 
   *o_write_p = write_p;
 }
+*/
 /*
 void restore_ihl_regs(ucontext_t *cont) {
   uintptr_t *sp = (uintptr_t *)cont->sp_field;
