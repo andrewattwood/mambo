@@ -234,7 +234,12 @@ uintptr_t scan(dbm_thread *thread_data, uint16_t *address, int basic_block) {
   }
 #endif
 #ifdef __aarch64__
-  block_size = scan_a64(thread_data, (uint32_t *)address, basic_block, mambo_bb, NULL);
+#ifdef MORELLOBSD
+ block_size = scan_a64c(thread_data, (uint32_t *)address, basic_block, mambo_bb, NULL);
+#else
+ block_size = scan_a64(thread_data, (uint32_t *)address, basic_block, mambo_bb, NULL);
+#endif
+ 
 #endif
 
   // Flush modified instructions from caches
@@ -611,7 +616,7 @@ void notify_vm_op(vm_op_t op, uintptr_t addr, size_t size, int prot, int flags, 
 #endif
 }
 
-void main(int argc, char **argv, char **envp) {
+int main(int argc, char **argv, char **envp) {
   Elf *elf = NULL;
   
   if (argc < 2) {
@@ -673,5 +678,7 @@ void main(int argc, char **argv, char **envp) {
 
   #define ARGDIFF 2
   elf_run(block_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
+
+  return 0;
 }
 

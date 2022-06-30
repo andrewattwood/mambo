@@ -40,7 +40,7 @@ endif
 ifeq ($(MORELLO), pure-freebsd)
 	CFLAGS+=-DMORELLOBSD -D_BSD_SOURCE -v
 	CFLAGS+=-mabi=purecap -femulated-tls --sysroot=$(CHERIOUTPUT)/rootfs-morello-purecap -ferror-limit=10 -Wcheri-provenance
-	CFLAGS+=-B $(CHERI)output/morello-sdk/bin/ -mcpu=rainier  -target aarch64-unknown-freebsd13  -march=morello+c64 
+	CFLAGS+=-B $(CHERIOUTPUT)/morello-sdk/bin/ -mcpu=rainier  -target aarch64-unknown-freebsd13  -march=morello+c64 
 endif	
 
 #ifeq ($(COMP), CLANG)
@@ -52,7 +52,7 @@ LDFLAGS+=-static -ldl
 LIBS=-lelf -lpthread -lz
 HEADERS=*.h makefile
 ifeq ($(MORELLO), pure-freebsd)
-	INCLUDES=-I$(CHERIOUTPUT)rootfs-morello-purecap/usr/include -I$(FREEBSD) -I. 
+	INCLUDES=-I$(FREEBSD) . 
 else
 	INCLUDES=-I/usr/include/libelf -I.
 endif
@@ -61,12 +61,17 @@ SOURCES= common.c dbm.c traces.c syscalls.c dispatcher.c signals.c util.S
 SOURCES+=api/helpers.c api/plugin_support.c api/branch_decoder_support.c api/load_store.c api/internal.c api/hash_table.c
 SOURCES+=elf/elf_loader.o elf/symbol_parser.o
 
-
+HEADERS += api/emit_a64c.h
+LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x7000000000)
+PIE += pie/pie-a64c-field-decoder.o pie/pie-a64c-encoder.o pie/pie-a64c-decoder.o
+SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
+SOURCES += arch/aarch64c/scanner_a64c.c
+SOURCES += api/emit_a64c.c
 
 ARCH=$(shell $(CC) -dumpmachine | awk -F '-' '{print $$1}')
 ifdef $(MORELLO)
-	HEADERS += api/emit_a64.h
-	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0x7000000000)
+	HEADERS += api/emit_a64c.h
+	LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x7000000000)
 	PIE += pie/pregenerated/pie-a64c-field-decoder.o pie/pregenerated/pie-a64c-encoder.o pie/pregenerated/pie-a64c-decoder.o
 	SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
 	SOURCES += arch/aarch64c/scanner_a64c.c

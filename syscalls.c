@@ -27,7 +27,7 @@
 #include <unistd.h>
 #ifdef MORELLOBSD
 #include <sys/sched.h>
-#include <sys/sys/syscall.h>
+#include <sys/syscall.h>
 #else
 #include <linux/sched.h>
 #endif
@@ -147,7 +147,7 @@ dbm_thread *dbm_create_thread(dbm_thread *thread_data, void *next_inst, sys_clon
 
   return new_thread_data;
 }
-
+/*
 uintptr_t emulate_brk(uintptr_t addr) {
   int ret;
 
@@ -160,7 +160,7 @@ uintptr_t emulate_brk(uintptr_t addr) {
   assert(ret == 0);
 
   /* We use mremap for non-overlapping re-allocation, therefore
-     we must always always keep at least one allocated page. */
+     we must always always keep at least one allocated page. *//*
   if (addr >= (global_data.initial_brk + PAGE_SIZE)) {
     void *map = mremap((void *)global_data.initial_brk,
                        global_data.brk - global_data.initial_brk,
@@ -183,7 +183,7 @@ uintptr_t emulate_brk(uintptr_t addr) {
 
   return global_data.brk;
 }
-
+*/
 ssize_t readlink_handler(char *sys_path, char *sys_buf, ssize_t bufsize) {
   const int proc_buflen = 100;
   char buf[proc_buflen];

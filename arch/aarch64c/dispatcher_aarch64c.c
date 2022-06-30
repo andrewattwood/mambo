@@ -41,7 +41,7 @@ void insert_cond_exit_branch(dbm_code_cache_meta *bb_meta, void **o_write_p, int
       a64_b_cond_helper(write_p, (uint64_t)write_p + 8, cond);
       break;
     case cbz_a64:
-      a64_cbz_cbnz_helper(write_p, cond, (uint64_t)write_p + 8,
+      a64c_cbz_cbnz_helper(write_p, cond, (uint64_t)write_p + 8,
                           bb_meta->rn >> 5, bb_meta->rn & 0x1F);
       break;
     case tbz_a64:

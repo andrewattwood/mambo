@@ -332,6 +332,7 @@ uintptr_t scan(dbm_thread *thread_data, uint16_t *address, int basic_block);
 uint32_t scan_a32(dbm_thread *thread_data, uint32_t *read_address, int basic_block, cc_type type, uint32_t *write_p);
 uint32_t scan_t32(dbm_thread *thread_data, uint16_t *read_address, int basic_block, cc_type type, uint16_t *write_p);
 size_t   scan_a64(dbm_thread *thread_data, uint32_t *read_address, int basic_block, cc_type type, uint32_t *write_p);
+size_t   scan_a64c(dbm_thread *thread_data, uint32_t *read_address, int basic_block, cc_type type, uint32_t *write_p);
 int allocate_bb(dbm_thread *thread_data);
 void trace_dispatcher(uintptr_t target, uintptr_t *next_addr, uint32_t source_index, dbm_thread *thread_data);
 void flush_code_cache(dbm_thread *thread_data);
@@ -422,7 +423,11 @@ int function_watch_add(watched_functions_t *self, char *name, int plugin_id,
 #define CC_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
 #define METADATA_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
 
+#ifdef MORELLOBSD
+#define PAGE_SIZE 4 * 1024
+#else
 #define PAGE_SIZE (page_size != 0 ? page_size : (page_size = getauxval(AT_PAGESZ)))
+#endif
 
 #define trampolines_size_bytes         ((uintptr_t)&end_of_dispatcher_s - (uintptr_t)&start_of_dispatcher_s)
 #define trampolines_size_bbs           ((trampolines_size_bytes / sizeof(dbm_block)) \

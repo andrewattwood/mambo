@@ -122,6 +122,39 @@ enum reg_alt {
   lr   =  x30,  // Link register
   sp   =  x31,  // Stack Pointer
   xzr  =  x31,  // Zero Register
+  c0   =   0,   // | c0           |
+  c1   =   1,   // | c1           |
+  c2   =   2,   // | c2           |
+  c3   =   3,   // | c3           |
+  c4   =   4,   // | c4           |
+  c5   =   5,   // | c5           |
+  c6   =   6,   // | c6           |
+  c7   =   7,   // | c7           |
+  c8   =   8,   // | c8 (XR)      |
+  c9   =   9,   // | c9           |
+  c10  =  10,   // | c10          |
+  c11  =  11,   // | c11          |
+  c12  =  12,   // | c12          |
+  c13  =  13,   // | c13          |
+  c14  =  14,   // | c14          |
+  c15  =  15,   // | c15          |
+  c16  =  16,   // | c16 (IP0)    |
+  c17  =  17,   // | c17 (IP1)    |
+  c18  =  18,   // | c18 (PR)     |
+  c19  =  19,   // | c19          |
+  c20  =  20,   // | c20          |
+  c21  =  21,   // | c21          |
+  c22  =  22,   // | c22          |
+  c23  =  23,   // | c23          |
+  c24  =  24,   // | c24          |
+  c25  =  25,   // | c25          |
+  c26  =  26,   // | c26          |
+  c27  =  27,   // | c27          |
+  c28  =  28,   // | c28          |
+  c29  =  29,   // | c29 (FP)     |
+  c30  =  30,   // | c30 (LR)     |
+  c31  =  31,    // | c31 (CSP/XZR) |
+  csp   =  c31
 };
 
 #define m_x0 (1 << x0)
@@ -242,24 +275,40 @@ extern enum arm_cond_codes arm_inverse_cond_code[];
  * PUSH PAIR
  * STP Xt1, Xt2, [SP]!
  */
-#define a64_push_pair_reg(Xt1, Xt2) \
-  a64_LDP_STP(&write_p, 2, 0, 3, 0, -2, Xt2, sp, Xt1); \
+#define a64c_push_pair_reg(Xt1, Xt2) \
+  a64c_LDP_STP(&write_p, 2, 0, 3, 0, -2, Xt2, csp, Xt1); \
   write_p++;
+
+
+/*
+ * PUSH PAIR CAPABILITIES
+ * STP Ct1, Ct2, [CSP]!
+ */
+#define a64c_push_pair_reg_cap(Ct1, Ct2) \
+  a64c_stp_cc_riaw_c(&write_p, Ct1, Ct2, csp, -2); \
+  write_p++;
+
 
 /*
  * POP PAIR
  * LDP Xt1, Xt2, [SP], #16
  */
-#define a64_pop_pair_reg(Xt1, Xt2) \
-  a64_LDP_STP(&write_p, 2, 0, 1, 1, 2, Xt2, sp, Xt1); \
+#define a64c_pop_pair_reg(Xt1, Xt2) \
+  a64c_LDP_STP(&write_p, 2, 0, 1, 1, 2, Xt2, sp, Xt1); \
   write_p++;
+
+
+#define a64c_pop_pair_reg_cap(Ct1, Ct2) \
+  a64c_ldp_cc_riaw_c(&write_p, Ct1, Ct2, csp, 2); \
+  write_p++;
+
 
 /*
  * PUSH REGISTER
  * STR reg, [SP, #-16]!
  */
 #define a64_push_reg(reg) \
-  a64_LDR_STR_immed(&write_p, 3, 0, 0, -16, 3, sp, reg); \
+  a64c_LDR_STR_immed(&write_p, 3, 0, 0, -16, 3, sp, reg); \
   write_p++;
 
 /*
@@ -267,7 +316,7 @@ extern enum arm_cond_codes arm_inverse_cond_code[];
  * LDR reg, [SP], #16
  */
 #define a64_pop_reg(reg) \
-  a64_LDR_STR_immed(&write_p, 3, 0, 1, 16, 1, sp, reg); \
+  a64c_LDR_STR_immed(&write_p, 3, 0, 1, 16, 1, sp, reg); \
   write_p++;
 
 void copy_to_reg_16bit(uint16_t **write_p, enum reg reg, uint32_t value);
