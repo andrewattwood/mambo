@@ -424,7 +424,7 @@ int function_watch_add(watched_functions_t *self, char *name, int plugin_id,
 #define METADATA_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
 
 #ifdef MORELLOBSD
-#define PAGE_SIZE 4 * 1024
+#define PAGE_SIZE 4096
 #else
 #define PAGE_SIZE (page_size != 0 ? page_size : (page_size = getauxval(AT_PAGESZ)))
 #endif

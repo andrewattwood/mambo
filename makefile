@@ -23,7 +23,7 @@
 
 
 VERSION?=$(shell git describe --abbrev=8 --dirty --always || echo '\<nogit\>')
-CFLAGS+=-D_GNU_SOURCE -g -std=gnu99 -O2 -Wunused-variable 
+CFLAGS+=-D_GNU_SOURCE -g -std=gnu99 -O0 -Wunused-variable 
 CFLAGS+=-DVERSION=\"$(VERSION)\"
 
 COMP=GCC
@@ -52,7 +52,7 @@ LDFLAGS+=-static -ldl
 LIBS=-lelf -lpthread -lz
 HEADERS=*.h makefile
 ifeq ($(MORELLO), pure-freebsd)
-	INCLUDES=-I$(FREEBSD) . 
+	INCLUDES=-I$(FREEBSD) -I$(CHERIOUTPUT)/rootfs-morello-purecap/usr/include/cheri/ -I. 
 else
 	INCLUDES=-I/usr/include/libelf -I.
 endif
@@ -62,7 +62,7 @@ SOURCES+=api/helpers.c api/plugin_support.c api/branch_decoder_support.c api/loa
 SOURCES+=elf/elf_loader.o elf/symbol_parser.o
 
 HEADERS += api/emit_a64c.h
-LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x7000000000)
+LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x600000)
 PIE += pie/pie-a64c-field-decoder.o pie/pie-a64c-encoder.o pie/pie-a64c-decoder.o
 SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
 SOURCES += arch/aarch64c/scanner_a64c.c

@@ -17,7 +17,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
+#define DEBUG
 #include <stdlib.h>
 #include <stdio.h>
 #include <libelf.h>
@@ -42,6 +42,11 @@
   #define debug(...)
 #endif
 
+#ifdef MORELLOBSD
+extern Elf_Auxinfo *__auxargs;
+#include <cheri/cheric.h>
+#endif
+
 extern void *__ehdr_start;
 
 void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, bool is_interp) {
@@ -63,6 +68,9 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
     prot |= PROT_READ;
   }
 
+  //testing hack to enable execute
+  prot |= PROT_EXEC;
+
   if (type == ET_DYN) {
     assert(base_addr != 0);
     phdr->p_vaddr += base_addr;
@@ -76,9 +84,20 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
 
   // Map a page-aligned file-backed segment including the (vaddr, vaddr + filesize) area
   #define MAP_EL_FILE (MAP_PRIVATE|MAP_FIXED)
+
   off_t offset = phdr->p_offset - page_offset;
-  mem = mmap((void *)aligned_vaddr, aligned_fsize, prot,
+  printf("\nmmap\n");
+  //prot = -1;
+  printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d, offset - %p, fd - %d\n", aligned_vaddr,aligned_vaddr + aligned_fsize ,aligned_fsize , prot, offset, fd );
+  void * cap_base_addr = (void *)base_addr + ((void *)aligned_vaddr - (void *)base_addr );
+  printf("\n Test address %p", cap_base_addr);
+
+  mem = mmap(cap_base_addr, aligned_fsize, prot,
              MAP_EL_FILE, fd, offset);
+
+  if(mem == MAP_FAILED){
+    printf("Oh dear, something went wrong with mmap()! %s\n", strerror(errno));
+  }
   assert(mem != MAP_FAILED);
   int flags = MAP_EL_FILE|(is_interp ? MAP_INTERP : MAP_APP);
   notify_vm_op(VM_MAP, aligned_vaddr, aligned_fsize,
@@ -86,19 +105,27 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
 
   // Zero the area from (vaddr + filesize) to the end of the page
   if (phdr->p_flags & PF_W) {
-    memset((void *)map_file_end, 0, (aligned_vaddr + aligned_fsize) - map_file_end);
+    printf("\nmemset\n");
+    memset((void *)mem + phdr->p_filesz, 0, (aligned_vaddr + aligned_fsize) - map_file_end);
   }
 
   // Allocate anonymous pages if aligned memsize > filesize
-  #define MAP_EL_ANON (MAP_ANONYMOUS|MAP_EL_FILE)
+  /*
+  #define MAP_EL_ANON (MAP_EL_FILE)
   if (aligned_msize > aligned_fsize) {
-    mem = mmap((void *)(aligned_vaddr + aligned_fsize), aligned_msize-aligned_fsize, prot,
-               MAP_EL_ANON, -1, 0);
+    void * remap_cap_base = cap_base_addr + ((void *)aligned_vaddr - (void *)cap_base_addr) + aligned_fsize;
+    printf("\nmapping non file space\n");
+    printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d\n", remap_cap_base,remap_cap_base + (aligned_msize-aligned_fsize) ,aligned_msize-aligned_fsize , prot );
+
+    mem = mmap( remap_cap_base  , aligned_msize-aligned_fsize , prot,
+               MAP_ANON | MAP_PRIVATE, -1, 0);
+    if(mem == MAP_FAILED)
+      printf("Oh dear, something went wrong with mmap()! %s\n", strerror(errno));           
     assert(mem != MAP_FAILED);
     notify_vm_op(VM_MAP, aligned_vaddr + aligned_fsize, aligned_msize-aligned_fsize,
                  prot | ((phdr->p_flags & PF_X) ? PROT_EXEC : 0), MAP_EL_ANON, -1, 0);
   }
-
+*/
 #ifdef ENABLE_EXECUTE
   if (phdr->p_flags & PF_X) {
     __clear_cache((char *)phdr->p_vaddr, (char *)phdr->p_vaddr + (char *)phdr->p_memsz);
@@ -189,17 +216,24 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
     assert(min_addr != 0);
   }
 
-  base_addr = mmap((void *)min_addr, max_addr - min_addr, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+  base_addr = mmap((void *)min_addr, align_higher(max_addr - min_addr, PAGE_SIZE) , PROT_READ | PROT_WRITE | PROT_EXEC , MAP_ANONYMOUS , -1, 0);
+
+  printf("\nAllocate memory region - Min Address = %x Max address = %x, base address = %x, size = %x\n",min_addr, align_higher(max_addr - min_addr, PAGE_SIZE),base_addr,(max_addr - min_addr));
+
   if (ehdr->e_type == ET_DYN) {
     assert(base_addr != MAP_FAILED);
     ehdr->e_entry += (uintptr_t)base_addr;
   } else {
+    if(base_addr == MAP_FAILED){
+       printf("Oh dear, something went wrong with mmap()! %s\n", strerror(errno));
+    }
     assert(base_addr == (void*)min_addr);
   }
 
+
   /* entry address is the actual execution entry point, either in the interpreter
      (if one is used), or in the executable */
-  *entry_addr = ehdr->e_entry;
+  *entry_addr = cheri_setaddress(base_addr,ehdr->e_entry);
 
   // AT_ENTRY in the AUXV points to the original executable
   if (!is_interp) {
@@ -251,7 +285,7 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
     
     switch(phdr[i].p_type) {
       case PT_LOAD:
-        load_segment((uintptr_t)base_addr, &phdr[i], fd, ehdr->e_type, is_interp);
+        load_segment(base_addr, &phdr[i], fd, ehdr->e_type, is_interp);
         if (is_interp) {
           if (phdr[i].p_offset == 0) {
             auxv->at_base = phdr[i].p_vaddr;
@@ -275,7 +309,7 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
   }
 }
 
-size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp) {
+size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv) {
   size_t size = (4 + argc) * sizeof(uintptr_t); // ARGC, ARGV[0], NULL after ARGs and ENVP
   size += 16; // AT_RANDOM
   size += strlen(filename) + 1;
@@ -287,8 +321,13 @@ size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp) 
   for (; *envp != NULL; envp++) {
     size += sizeof(uintptr_t) + strlen(*envp) + 1;
   }
-
+#ifdef MORELLOBSD
+  ELF_AUXV_T *s_aux = __auxargs;
+#else 
   ELF_AUXV_T *s_aux = (ELF_AUXV_T *)(envp + 1);
+#endif 
+
+
   while(s_aux->a_type != AT_NULL) {
   #ifndef MORELLOBSD
     switch(s_aux->a_type) {
@@ -326,19 +365,27 @@ char *copy_string_to_stack(char *string, char **stack_strings) {
 void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv) {
   // Allocate a new stack for the execution of the application
   void *stack_space = mmap(NULL, INITIAL_STACK_SIZE, STACK_PROT, STACK_FLAGS, -1, 0);
+  printf("\nstack_space - %#p \n ", stack_space);
   assert(stack_space != MAP_FAILED);
   notify_vm_op(VM_MAP, (uintptr_t)stack_space, INITIAL_STACK_SIZE, STACK_PROT, STACK_FLAGS, -1, 0);
+
+
 
   // Grows up (towards lower addresses)
   char *stack_strings = stack_space + INITIAL_STACK_SIZE;
 
+printf("\nstack_strings - %#p  \n", stack_strings);
   // Grows down (towards higher addresses)
-  size_t data_size = find_stack_data_size(filename, argc, argv, envp);
-  uintptr_t *stack = (uintptr_t *)align_lower((uintptr_t)(stack_space + INITIAL_STACK_SIZE - data_size), 16);
+  size_t data_size = find_stack_data_size(filename, argc, argv, envp, auxv);
+  //uintptr_t *stack = (uintptr_t *)align_lower_cap((uintptr_t *)(stack_space + INITIAL_STACK_SIZE - data_size), 16);
+  uintptr_t *stack = __builtin_align_down(stack_space  + INITIAL_STACK_SIZE - data_size,16);
+  printf("\nstack - %#p , stack_space - %#p \n",stack, stack_space);
+
   int stack_i = 0;
 
   // Copy args
   stack_push(argc + 1);
+
   stack_push((uintptr_t)copy_string_to_stack(filename, &stack_strings));
   for (int i = 0; i < argc; i++) {
     stack_push((uintptr_t)copy_string_to_stack(argv[i], &stack_strings));
@@ -353,7 +400,16 @@ void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, cha
   stack_push((uintptr_t)NULL);
   
   // Copy the Auxiliary Vector
-  ELF_AUXV_T *s_aux = (ELF_AUXV_T *)(envp + 1);
+
+ 
+
+#ifdef MORELLOBSD
+  ELF_AUXV_T *s_aux = __auxargs;
+#else 
+   ELF_AUXV_T *s_aux = (ELF_AUXV_T *)(envp + 1);
+#endif 
+
+
   ELF_AUXV_T *d_aux = (ELF_AUXV_T *)&stack[stack_i];
   while(s_aux->a_type != AT_NULL) {
     d_aux->a_type = s_aux->a_type;
@@ -376,6 +432,28 @@ void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, cha
       case AT_GID:
       case AT_EGID:
 
+#ifdef MORELLOBSD
+      case AT_EHDRFLAGS:
+      case AT_OSRELDATE:
+      case AT_CANARY:
+      case AT_CANARYLEN:
+      case AT_NCPUS:
+      case AT_PAGESIZES:
+      case AT_PAGESIZESLEN:
+      case AT_TIMEKEEP:
+      case AT_STACKPROT:
+      case AT_BSDFLAGS:
+      case AT_ARGC:
+      case AT_ARGV:
+      case AT_ENVC:
+      case AT_ENVV:
+      case AT_PS_STRINGS:
+      case AT_FXRNG:
+      case AT_KPRELOAD:
+      case AT_COUNT:
+
+
+#endif  
 
       case AT_MINSIGSTKSZ:
       case AT_PHENT:
@@ -392,6 +470,10 @@ void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, cha
       case AT_PLATFORM:
       case AT_EXECFN:
         d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_val, &stack_strings);
+        break;    
+#else
+      case AT_EXECPATH:
+        d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_ptr, &stack_strings);
         break;    
 
 #endif     
@@ -453,7 +535,7 @@ void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, cha
       auxv[z]  [HIGH]
   */
   assert((char *)&stack[stack_i] <= stack_strings);
-
+  printf("\nDBM client entry\n");
   dbm_client_entry(entry_address, &stack[0]);
   
   // If we return here, something is horribly wrong

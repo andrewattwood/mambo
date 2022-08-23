@@ -102,7 +102,7 @@ uintptr_t cc_lookup(dbm_thread *thread_data, uintptr_t target) {
   return adjust_cc_entry(addr);
 }
 
-inline uintptr_t _lookup_or_scan(dbm_thread * const thread_data,
+static inline uintptr_t _lookup_or_scan(dbm_thread * const thread_data,
                                  const uintptr_t target,
                                  bool * const cached) {
   bool from_cache = false;
@@ -617,6 +617,7 @@ void notify_vm_op(vm_op_t op, uintptr_t addr, size_t size, int prot, int flags, 
 }
 
 int main(int argc, char **argv, char **envp) {
+  printf("starting mambo");
   Elf *elf = NULL;
   
   if (argc < 2) {
@@ -629,6 +630,10 @@ int main(int argc, char **argv, char **envp) {
 
   // Obtain the page size if it's not already known
   PAGE_SIZE;
+  if(page_size == 0)
+    page_size = getpagesize();
+
+  printf("\n Page Size - %d", page_size);
   assert(page_size > 0);
 
   int ret = pthread_mutex_init(&global_data.thread_list_mutex, NULL);
@@ -647,6 +652,13 @@ int main(int argc, char **argv, char **envp) {
   uintptr_t entry_address;
   load_elf(argv[1], &elf, &auxv, &entry_address, false);
   debug("entry address: 0x%" PRIxPTR "\n", entry_address);
+  #define ARGDIFF 2
+
+//we need to modify elf run to jump to the entry address instead of the first scanned basic block.  
+  //elf_run(block_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
+  printf("running elf");
+  elf_run(entry_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
+
 
   // Set up brk emulation
   ret = pthread_mutex_init(&global_data.brk_mutex, NULL);
@@ -676,8 +688,7 @@ int main(int argc, char **argv, char **envp) {
   uintptr_t block_address = scan(thread_data, (uint16_t *)entry_address, ALLOCATE_BB);
   debug("Address of first basic block is: 0x%" PRIxPTR "\n", block_address);
 
-  #define ARGDIFF 2
-  elf_run(block_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
+
 
   return 0;
 }

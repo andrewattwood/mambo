@@ -1,0 +1,569 @@
+clang version 13.0.0 (https://git.morello-project.org/morello/llvm-project.git 0d2a3da490a43b0b78161f0040c3cbf60cb6e07d)
+Target: aarch64-unknown-freebsd13
+Thread model: posix
+InstalledDir: /Users/andrewattwood/cheri/output/morello-sdk/bin
+ (in-process)
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name elf_loader.c -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o elf/elf_loader.o -x c elf/elf_loader.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+#include "..." search starts here:
+#include <...> search starts here:
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from elf/elf_loader.c:32:
+In file included from elf/../dbm.h:41:
+elf/../common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+elf/elf_loader.c:91:105: warning: format specifies type 'void *' but the argument has type 'uintptr_t' (aka 'unsigned __intcap') [-Wformat]
+  printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d, offset - %p, fd - %d\n", aligned_vaddr,aligned_vaddr + aligned_fsize ,aligned_fsize , prot, offset, fd );
+                               ~~                                                                       ^~~~~~~~~~~~~
+elf/elf_loader.c:91:119: warning: format specifies type 'void *' but the argument has type 'unsigned __intcap' [-Wformat]
+  printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d, offset - %p, fd - %d\n", aligned_vaddr,aligned_vaddr + aligned_fsize ,aligned_fsize , prot, offset, fd );
+                                                 ~~                                                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+elf/elf_loader.c:91:150: warning: format specifies type 'void *' but the argument has type 'uintptr_t' (aka 'unsigned __intcap') [-Wformat]
+  printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d, offset - %p, fd - %d\n", aligned_vaddr,aligned_vaddr + aligned_fsize ,aligned_fsize , prot, offset, fd );
+                                                                  ~~                                                                                 ^~~~~~~~~~~~~
+elf/elf_loader.c:91:172: warning: format specifies type 'void *' but the argument has type 'off_t' (aka 'long') [-Wformat]
+  printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d, offset - %p, fd - %d\n", aligned_vaddr,aligned_vaddr + aligned_fsize ,aligned_fsize , prot, offset, fd );
+                                                                                        ~~                                                                                 ^~~~~~
+                                                                                        %ld
+elf/elf_loader.c:91:133: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'uintptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d, offset - %p, fd - %d\n", aligned_vaddr,aligned_vaddr + aligned_fsize ,aligned_fsize , prot, offset, fd );
+                                                                                                                      ~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~
+elf/elf_loader.c:109:60: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'uintptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+    memset((void *)mem + phdr->p_filesz, 0, (aligned_vaddr + aligned_fsize) - map_file_end);
+                                             ~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~
+elf/elf_loader.c:135:36: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'uintptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (!is_interp && (aligned_vaddr + aligned_msize) > global_data.brk) {
+                     ~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~
+elf/elf_loader.c:136:37: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'uintptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+    global_data.brk = aligned_vaddr + aligned_msize;
+                      ~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~
+elf/elf_loader.c:221:105: warning: format specifies type 'unsigned int' but the argument has type 'uintptr_t' (aka 'unsigned __intcap') [-Wformat]
+  printf("\nAllocate memory region - Min Address = %x Max address = %x, base address = %x, size = %x\n",min_addr, align_higher(max_addr - min_addr, PAGE_SIZE),base_addr,(max_addr - min_addr));
+                                                   ~~                                                   ^~~~~~~~
+elf/elf_loader.c:221:115: warning: format specifies type 'unsigned int' but the argument has type 'uintptr_t' (aka 'unsigned __intcap') [-Wformat]
+  printf("\nAllocate memory region - Min Address = %x Max address = %x, base address = %x, size = %x\n",min_addr, align_higher(max_addr - min_addr, PAGE_SIZE),base_addr,(max_addr - min_addr));
+                                                                    ~~                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+elf/elf_loader.c:221:160: warning: format specifies type 'unsigned int' but the argument has type 'void *' [-Wformat]
+  printf("\nAllocate memory region - Min Address = %x Max address = %x, base address = %x, size = %x\n",min_addr, align_higher(max_addr - min_addr, PAGE_SIZE),base_addr,(max_addr - min_addr));
+                                                                                       ~~                                                                      ^~~~~~~~~
+elf/elf_loader.c:221:170: warning: format specifies type 'unsigned int' but the argument has type 'unsigned __intcap' [-Wformat]
+  printf("\nAllocate memory region - Min Address = %x Max address = %x, base address = %x, size = %x\n",min_addr, align_higher(max_addr - min_addr, PAGE_SIZE),base_addr,(max_addr - min_addr));
+                                                                                                  ~~                                                                     ^~~~~~~~~~~~~~~~~~~~~
+elf/elf_loader.c:236:15: warning: incompatible pointer to integer conversion assigning to 'uintptr_t' (aka 'unsigned __intcap') from 'void *' [-Wint-conversion]
+  *entry_addr = cheri_setaddress(base_addr,ehdr->e_entry);
+              ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+elf/elf_loader.c:278:31: warning: format specifies type 'unsigned int' but the argument has type 'Elf64_Off' (aka 'unsigned long') [-Wformat]
+    debug("p_offset: 0x%x\n", phdr[i].p_offset);
+                       ~~     ^~~~~~~~~~~~~~~~
+                       %lx
+elf/elf_loader.c:40:38: note: expanded from macro 'debug'
+  #define debug(...) fprintf(stderr, __VA_ARGS__)
+                                     ^~~~~~~~~~~
+elf/elf_loader.c:279:30: warning: format specifies type 'unsigned int' but the argument has type 'Elf64_Addr' (aka 'unsigned long') [-Wformat]
+    debug("p_vaddr: 0x%x\n", phdr[i].p_vaddr);
+                      ~~     ^~~~~~~~~~~~~~~
+                      %lx
+elf/elf_loader.c:40:38: note: expanded from macro 'debug'
+  #define debug(...) fprintf(stderr, __VA_ARGS__)
+                                     ^~~~~~~~~~~
+elf/elf_loader.c:280:30: warning: format specifies type 'unsigned int' but the argument has type 'Elf64_Addr' (aka 'unsigned long') [-Wformat]
+    debug("p_paddr: 0x%x\n", phdr[i].p_paddr);
+                      ~~     ^~~~~~~~~~~~~~~
+                      %lx
+elf/elf_loader.c:40:38: note: expanded from macro 'debug'
+  #define debug(...) fprintf(stderr, __VA_ARGS__)
+                                     ^~~~~~~~~~~
+elf/elf_loader.c:281:31: warning: format specifies type 'unsigned int' but the argument has type 'Elf64_Xword' (aka 'unsigned long') [-Wformat]
+    debug("p_filesz: 0x%x\n", phdr[i].p_filesz);
+                       ~~     ^~~~~~~~~~~~~~~~
+                       %lx
+elf/elf_loader.c:40:38: note: expanded from macro 'debug'
+  #define debug(...) fprintf(stderr, __VA_ARGS__)
+                                     ^~~~~~~~~~~
+elf/elf_loader.c:282:30: warning: format specifies type 'unsigned int' but the argument has type 'Elf64_Xword' (aka 'unsigned long') [-Wformat]
+    debug("p_memsz: 0x%x\n", phdr[i].p_memsz);
+                      ~~     ^~~~~~~~~~~~~~~
+                      %lx
+elf/elf_loader.c:40:38: note: expanded from macro 'debug'
+  #define debug(...) fprintf(stderr, __VA_ARGS__)
+                                     ^~~~~~~~~~~
+elf/elf_loader.c:284:30: warning: format specifies type 'unsigned int' but the argument has type 'Elf64_Xword' (aka 'unsigned long') [-Wformat]
+    debug("p_align: 0x%x\n", phdr[i].p_align);
+                      ~~     ^~~~~~~~~~~~~~~
+                      %lx
+elf/elf_loader.c:40:38: note: expanded from macro 'debug'
+  #define debug(...) fprintf(stderr, __VA_ARGS__)
+                                     ^~~~~~~~~~~
+elf/elf_loader.c:288:22: warning: incompatible pointer to integer conversion passing 'void *' to parameter of type 'uintptr_t' (aka 'unsigned __intcap') [-Wint-conversion]
+        load_segment(base_addr, &phdr[i], fd, ehdr->e_type, is_interp);
+                     ^~~~~~~~~
+elf/elf_loader.c:52:29: note: passing argument to parameter 'base_addr' here
+void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, bool is_interp) {
+                            ^
+elf/elf_loader.c:310:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+}
+^
+22 warnings generated.
+clang version 13.0.0 (https://git.morello-project.org/morello/llvm-project.git 0d2a3da490a43b0b78161f0040c3cbf60cb6e07d)
+Target: aarch64-unknown-freebsd13
+Thread model: posix
+InstalledDir: /Users/andrewattwood/cheri/output/morello-sdk/bin
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name common.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/common-eeb06d.o -x c common.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from common.c:33:
+In file included from ./dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+1 warning generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name dbm.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dbm-7d2916.o -x c dbm.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from dbm.c:40:
+In file included from ./dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+In file included from dbm.c:44:
+./elf/elf_loader.h:33:11: warning: 'ELF_CLASS' macro redefined [-Wmacro-redefined]
+  #define ELF_CLASS  ELFCLASS64
+          ^
+/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/sys/elf_generic.h:45:9: note: previous definition is here
+#define ELF_CLASS       __CONCAT(ELFCLASS,__ELF_WORD_SIZE)
+        ^
+dbm.c:162:68: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'uintptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (!hash_add(&thread_data->entry_address, target, block_address + thumb)) {
+                                                     ~~~~~~~~~~~~~ ^ ~~~~~
+dbm.c:375:39: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (munmap(thread_data->code_cache, CC_SZ_ROUND(sizeof(dbm_code_cache))) != 0) {
+                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:423:28: note: expanded from macro 'CC_SZ_ROUND'
+#define CC_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:421:31: note: expanded from macro 'ROUND_UP'
+  ((((input) / (multiple_of)) * (multiple_of)) + (((input) % (multiple_of)) ? (multiple_of) : 0))
+    ~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~
+dbm.c:375:39: warning: binary expression on capability types 'unsigned __intcap' and 'unsigned __intcap'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (munmap(thread_data->code_cache, CC_SZ_ROUND(sizeof(dbm_code_cache))) != 0) {
+                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:423:28: note: expanded from macro 'CC_SZ_ROUND'
+#define CC_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:421:48: note: expanded from macro 'ROUND_UP'
+  ((((input) / (multiple_of)) * (multiple_of)) + (((input) % (multiple_of)) ? (multiple_of) : 0))
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dbm.c:379:37: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (munmap(thread_data->cc_links, METADATA_SZ_ROUND(sizeof(ll) + sizeof(ll_entry) * MAX_CC_LINKS)) != 0) {
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:424:34: note: expanded from macro 'METADATA_SZ_ROUND'
+#define METADATA_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:421:31: note: expanded from macro 'ROUND_UP'
+  ((((input) / (multiple_of)) * (multiple_of)) + (((input) % (multiple_of)) ? (multiple_of) : 0))
+    ~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~
+dbm.c:379:37: warning: binary expression on capability types 'unsigned __intcap' and 'unsigned __intcap'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (munmap(thread_data->cc_links, METADATA_SZ_ROUND(sizeof(ll) + sizeof(ll_entry) * MAX_CC_LINKS)) != 0) {
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:424:34: note: expanded from macro 'METADATA_SZ_ROUND'
+#define METADATA_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:421:48: note: expanded from macro 'ROUND_UP'
+  ((((input) / (multiple_of)) * (multiple_of)) + (((input) % (multiple_of)) ? (multiple_of) : 0))
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dbm.c:383:27: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (munmap(thread_data, METADATA_SZ_ROUND(sizeof(dbm_thread))) != 0) {
+                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:424:34: note: expanded from macro 'METADATA_SZ_ROUND'
+#define METADATA_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:421:31: note: expanded from macro 'ROUND_UP'
+  ((((input) / (multiple_of)) * (multiple_of)) + (((input) % (multiple_of)) ? (multiple_of) : 0))
+    ~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~
+dbm.c:383:27: warning: binary expression on capability types 'unsigned __intcap' and 'unsigned __intcap'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  if (munmap(thread_data, METADATA_SZ_ROUND(sizeof(dbm_thread))) != 0) {
+                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:424:34: note: expanded from macro 'METADATA_SZ_ROUND'
+#define METADATA_SZ_ROUND(input) ROUND_UP(input, CC_PAGE_SIZE)
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./api/../dbm.h:421:48: note: expanded from macro 'ROUND_UP'
+  ((((input) / (multiple_of)) * (multiple_of)) + (((input) % (multiple_of)) ? (multiple_of) : 0))
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dbm.c:411:44: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'unsigned __intcap'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+                                           + dispatcher_thread_data_offset);
+                                           ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dbm.c:415:44: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'unsigned __intcap'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+                                           + th_is_pending_ptr_offset);
+                                           ^ ~~~~~~~~~~~~~~~~~~~~~~~~
+dbm.c:437:73: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'unsigned __intcap'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  thread_data->dispatcher_addr = (uintptr_t)&thread_data->code_cache[0] + dispatcher_wrapper_offset;
+                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~~
+dbm.c:438:78: warning: binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'unsigned __intcap'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  thread_data->syscall_wrapper_addr = (uintptr_t)&thread_data->code_cache[0] + syscall_wrapper_offset;
+                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~
+dbm.c:460:12: warning: incompatible pointer types passing 'pid_t *' (aka 'int *') to parameter of type 'long *' [-Wincompatible-pointer-types]
+  thr_self(&thread_data->tid);
+           ^~~~~~~~~~~~~~~~~
+/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/sys/thr.h:77:20: note: passing argument to parameter 'id' here
+int thr_self(long *id);
+                   ^
+dbm.c:636:31: warning: format specifies type 'int' but the argument has type 'uintptr_t' (aka 'unsigned __intcap') [-Wformat]
+  printf("\n Page Size - %d", page_size);
+                         ~~   ^~~~~~~~~
+dbm.c:681:12: warning: incompatible pointer types passing 'pid_t *' (aka 'int *') to parameter of type 'long *' [-Wincompatible-pointer-types]
+  thr_self(&thread_data->tid);
+           ^~~~~~~~~~~~~~~~~
+/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/sys/thr.h:77:20: note: passing argument to parameter 'id' here
+int thr_self(long *id);
+                   ^
+dbm.c:688:13: warning: unused variable 'block_address' [-Wunused-variable]
+  uintptr_t block_address = scan(thread_data, (uint16_t *)entry_address, ALLOCATE_BB);
+            ^
+17 warnings generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name traces.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/traces-e90c87.o -x c traces.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from traces.c:28:
+In file included from ./dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+1 warning generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name syscalls.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/syscalls-94651e.o -x c syscalls.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from syscalls.c:43:
+In file included from ./dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+In file included from syscalls.c:43:
+./api/../dbm.h:427:9: warning: 'PAGE_SIZE' macro redefined [-Wmacro-redefined]
+#define PAGE_SIZE 4096
+        ^
+/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/machine/param.h:109:9: note: previous definition is here
+#define PAGE_SIZE       PAGE_SIZE_4K
+        ^
+syscalls.c:162:3: warning: '/*' within block comment [-Wcomment]
+  /* We use mremap for non-overlapping re-allocation, therefore
+  ^
+syscalls.c:345:5: warning: '/*' within block comment [-Wcomment]
+    /* Remove the execute permission from application mappings. At this point, this mostly acts
+    ^
+syscalls.c:357:7: warning: '/*' within block comment [-Wcomment]
+      /* Ensure that code pages are readable by the code scanner. *//*
+      ^
+syscalls.c:447:7: warning: '/*' within block comment [-Wcomment]
+      /* We force all signal handler to the SA_SIGINFO type, which must return
+      ^
+syscalls.c:476:7: warning: '/*' within block comment [-Wcomment]
+      /* Returning to the calling BB is potentially unsafe because the remaining
+      ^
+syscalls.c:213:19: warning: unused variable 'clone_args' [-Wunused-variable]
+  sys_clone_args *clone_args;
+                  ^
+syscalls.c:525:9: warning: '/*' within block comment [-Wcomment]
+        /* Without CLONE_VM, the child runs in a separate memory space,
+        ^
+9 warnings generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name dispatcher.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher-f8fd32.o -x c dispatcher.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from dispatcher.c:24:
+In file included from ./dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+1 warning generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name signals.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/signals-20b7f6.o -x c signals.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from signals.c:29:
+In file included from ./dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+signals.c:99:7: warning: unused variable 'ret' [-Wunused-variable]
+  int ret = sigprocmask( SIG_BLOCK,  NULL, (sigset_t *)&sigmask);
+      ^
+signals.c:241:5: warning: '/*' within block comment [-Wcomment]
+    /* It's already setting up a call to the dispatcher. Ensure that the
+    ^
+signals.c:319:3: warning: '/*' within block comment [-Wcomment]
+  /*
+  ^
+signals.c:338:3: warning: '/*' within block comment [-Wcomment]
+  /*
+  ^
+signals.c:670:3: warning: '/*' within block comment [-Wcomment]
+  /* Call the handlers of synchronous signals immediately
+  ^
+signals.c:546:8: warning: unused variable 'deliver_now' [-Wunused-variable]
+  bool deliver_now = false;
+       ^
+7 warnings generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -E -disable-free -main-file-name util.S -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/util-ba7eb7.s -x assembler-with-cpp util.S
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1as -triple aarch64-unknown-freebsd13 -filetype obj -main-file-name util.S -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -dwarf-debug-producer "clang version 13.0.0 (https://git.morello-project.org/morello/llvm-project.git 0d2a3da490a43b0b78161f0040c3cbf60cb6e07d)" -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -debug-info-kind=constructor -dwarf-version=4 -mrelocation-model pic -target-abi purecap -mrelax-all --mrelax-relocations -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/util-618bd1.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/util-ba7eb7.s
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name helpers.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/helpers-f781dc.o -x c api/helpers.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name plugin_support.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/plugin_support-bc6e19.o -x c api/plugin_support.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from api/plugin_support.c:26:
+In file included from api/../dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+1 warning generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name branch_decoder_support.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/branch_decoder_support-1b3f23.o -x c api/branch_decoder_support.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from api/branch_decoder_support.c:23:
+In file included from api/../dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+1 warning generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name load_store.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/load_store-dfdf47.o -x c api/load_store.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name internal.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/internal-2aafa5.o -x c api/internal.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from api/internal.c:23:
+In file included from api/../dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+1 warning generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name hash_table.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/hash_table-6a4f1b.o -x c api/hash_table.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+api/hash_table.c:80:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+}
+^
+api/hash_table.c:139:1: warning: non-void function does not return a value [-Wreturn-type]
+}
+^
+2 warnings generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -E -disable-free -main-file-name dispatcher_aarch64c.S -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-aa9acc.s -x assembler-with-cpp arch/aarch64c/dispatcher_aarch64c.S
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1as -triple aarch64-unknown-freebsd13 -filetype obj -main-file-name dispatcher_aarch64c.S -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -dwarf-debug-producer "clang version 13.0.0 (https://git.morello-project.org/morello/llvm-project.git 0d2a3da490a43b0b78161f0040c3cbf60cb6e07d)" -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -debug-info-kind=constructor -dwarf-version=4 -mrelocation-model pic -target-abi purecap -mrelax-all --mrelax-relocations -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-532855.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-aa9acc.s
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name dispatcher_aarch64c.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-f43494.o -x c arch/aarch64c/dispatcher_aarch64c.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from arch/aarch64c/dispatcher_aarch64c.c:24:
+In file included from arch/aarch64c/../../dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+arch/aarch64c/dispatcher_aarch64c.c:44:7: warning: implicit declaration of function 'a64c_cbz_cbnz_helper' is invalid in C99 [-Wimplicit-function-declaration]
+      a64c_cbz_cbnz_helper(write_p, cond, (uint64_t)write_p + 8,
+      ^
+arch/aarch64c/dispatcher_aarch64c.c:44:7: warning: call to function 'a64c_cbz_cbnz_helper' with no prototype may lead to run-time stack corruption [-Wcheri-prototypes]
+      a64c_cbz_cbnz_helper(write_p, cond, (uint64_t)write_p + 8,
+      ^~~~~~~~~~~~~~~~~~~~
+arch/aarch64c/dispatcher_aarch64c.c:44:7: note: candidate function declaration needs parameter types
+arch/aarch64c/dispatcher_aarch64c.c:44:7: note: Calling functions without prototypes is dangerous because on some architectures (e.g. pure-capability MIPS) integer and pointer arguments are passed in different registers. If the call includes a parameter that does not match the function definition, the function will read uninitialized values from the argument registers.
+arch/aarch64c/dispatcher_aarch64c.c:68:11: warning: 9 enumeration values not handled in switch: 'unknown', 'stub', 'trace_inline_max'... [-Wswitch]
+  switch (exit_type) {
+          ^
+arch/aarch64c/dispatcher_aarch64c.c:62:13: warning: unused variable 'branch_addr' [-Wunused-variable]
+  uint32_t *branch_addr;
+            ^
+arch/aarch64c/dispatcher_aarch64c.c:63:8: warning: unused variable 'is_taken' [-Wunused-variable]
+  bool is_taken;
+       ^
+arch/aarch64c/dispatcher_aarch64c.c:64:13: warning: unused variable 'other_target' [-Wunused-variable]
+  uintptr_t other_target;
+            ^
+arch/aarch64c/dispatcher_aarch64c.c:65:8: warning: unused variable 'other_target_in_cache' [-Wunused-variable]
+  bool other_target_in_cache;
+       ^
+arch/aarch64c/dispatcher_aarch64c.c:66:14: warning: unused variable 'cond' [-Wunused-variable]
+  mambo_cond cond;
+             ^
+9 warnings generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name scanner_a64c.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/scanner_a64c-1f2f5c.o -x c arch/aarch64c/scanner_a64c.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+In file included from arch/aarch64c/scanner_a64c.c:27:
+In file included from arch/aarch64c/../../dbm.h:41:
+./common.h:95:51: warning: binary expression on capability types 'unsigned __intcap' and 'uintptr_t' (aka 'unsigned __intcap'); it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side [-Wcheri-provenance]
+  uintptr_t aligned_address = address / alignment * alignment;
+                              ~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+arch/aarch64c/scanner_a64c.c:252:10: warning: 263 enumeration values not handled in switch: 'A64C_B_COND', 'A64C_SVC', 'A64C_HVC'... [-Wswitch]
+  switch(inst) {
+         ^
+arch/aarch64c/scanner_a64c.c:292:10: warning: 263 enumeration values not handled in switch: 'A64C_B_COND', 'A64C_SVC', 'A64C_HVC'... [-Wswitch]
+  switch(inst) {
+         ^
+arch/aarch64c/scanner_a64c.c:333:12: warning: 257 enumeration values not handled in switch: 'A64C_SVC', 'A64C_HVC', 'A64C_SMC'... [-Wswitch]
+    switch(instruction) {
+           ^
+arch/aarch64c/scanner_a64c.c:497:38: warning: implicit conversion from enumeration type 'enum reg_alt' to different enumeration type 'enum reg' [-Wenum-conversion]
+    a64_copy_to_reg_64bits(&write_p, lr, (uint64_t)read_address + 4);
+    ~~~~~~~~~~~~~~~~~~~~~~           ^~
+arch/aarch64c/scanner_a64c.c:735:44: warning: implicit conversion from enumeration type 'enum reg_alt' to different enumeration type 'enum reg' [-Wenum-conversion]
+          a64_copy_to_reg_64bits(&write_p, lr, (uint64_t)read_address + 4);
+          ~~~~~~~~~~~~~~~~~~~~~~           ^~
+arch/aarch64c/scanner_a64c.c:776:44: warning: implicit conversion from enumeration type 'enum reg_alt' to different enumeration type 'enum reg' [-Wenum-conversion]
+          a64_copy_to_reg_64bits(&write_p, lr, (uint64_t)read_address + 4);
+          ~~~~~~~~~~~~~~~~~~~~~~           ^~
+arch/aarch64c/scanner_a64c.c:558:17: warning: unused variable 'CRm' [-Wunused-variable]
+  uint32_t CRn, CRm, Rd, Rn, Rt;
+                ^
+arch/aarch64c/scanner_a64c.c:558:12: warning: unused variable 'CRn' [-Wunused-variable]
+  uint32_t CRn, CRm, Rd, Rn, Rt;
+           ^
+arch/aarch64c/scanner_a64c.c:566:8: warning: unused variable 'TPIDR_EL0' [-Wunused-variable]
+  bool TPIDR_EL0;
+       ^
+arch/aarch64c/scanner_a64c.c:559:26: warning: unused variable 'op1' [-Wunused-variable]
+  uint32_t cond, o0, op, op1, op2, opc, R, V;
+                         ^
+arch/aarch64c/scanner_a64c.c:559:31: warning: unused variable 'op2' [-Wunused-variable]
+  uint32_t cond, o0, op, op1, op2, opc, R, V;
+                              ^
+arch/aarch64c/scanner_a64c.c:559:18: warning: unused variable 'o0' [-Wunused-variable]
+  uint32_t cond, o0, op, op1, op2, opc, R, V;
+                 ^
+arch/aarch64c/scanner_a64c.c:555:12: warning: unused variable 'spilled_reg' [-Wunused-variable]
+  enum reg spilled_reg;
+           ^
+arch/aarch64c/scanner_a64c.c:559:41: warning: unused variable 'R' [-Wunused-variable]
+  uint32_t cond, o0, op, op1, op2, opc, R, V;
+                                        ^
+15 warnings generated.
+ "/Users/andrewattwood/cheri/output/morello-sdk/bin/clang-13" -cc1 -triple aarch64-unknown-freebsd13 -emit-obj -mrelax-all --mrelax-relocations -disable-free -main-file-name emit_a64c.c -static-define -mrelocation-model pic -pic-level 1 -fhalf-no-semantic-interposition -mframe-pointer=non-leaf -fno-rounding-math -mconstructor-aliases -munwind-tables -target-cpu rainier -target-feature +neon -target-feature +v8.2a -target-feature +fp-armv8 -target-feature +dotprod -target-feature +fullfp16 -target-feature +spe -target-feature +ssbs -target-feature +rcpc -target-feature +morello -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fallow-half-arguments-and-returns -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=gdb -target-linker-version 762 -v -fcoverage-compilation-dir=/Users/andrewattwood/uom/moate/mambo -resource-dir /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0 -D _GNU_SOURCE -D "VERSION=\"c6f23051-dirty\"" -D MORELLOBSD -D _BSD_SOURCE -I -I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/ -I . -isysroot /Users/andrewattwood/cheri/output//rootfs-morello-purecap -O0 -Wunused-variable -Wcheri-provenance -std=gnu99 -fdebug-compilation-dir=/Users/andrewattwood/uom/moate/mambo -ferror-limit 10 -femulated-tls -fno-signed-char -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/emit_a64c-9476f4.o -x c api/emit_a64c.c
+clang -cc1 version 13.0.0 based upon LLVM 13.0.0git default target arm64-apple-darwin21.3.0
+ignoring nonexistent directory "-I/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include/cheri/"
+#include "..." search starts here:
+#include <...> search starts here:
+ .
+ /Users/andrewattwood/cheri/output/morello-sdk/lib/clang/13.0.0/include
+ /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/include
+End of search list.
+ "/Users/andrewattwood/cheri/output//morello-sdk/bin/ld" --sysroot=/Users/andrewattwood/cheri/output//rootfs-morello-purecap --eh-frame-hdr -Bstatic -m aarch64elf_cheri --no-warn-mismatch -o dbm /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/lib64c/crt1.o /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/lib64c/crtbeginT.o -L/Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/lib64c -ldl --image-base=0x600000 /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/common-eeb06d.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dbm-7d2916.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/traces-e90c87.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/syscalls-94651e.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher-f8fd32.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/signals-20b7f6.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/util-618bd1.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/helpers-f781dc.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/plugin_support-bc6e19.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/branch_decoder_support-1b3f23.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/load_store-dfdf47.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/internal-2aafa5.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/hash_table-6a4f1b.o elf/elf_loader.o elf/symbol_parser.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-532855.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-f43494.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/scanner_a64c-1f2f5c.o /var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/emit_a64c-9476f4.o pie/pie-a64c-field-decoder.o pie/pie-a64c-encoder.o pie/pie-a64c-decoder.o -lelf -lpthread -lz --start-group -lgcc -lgcc_eh -lc -lgcc -lgcc_eh --end-group /Users/andrewattwood/cheri/output//rootfs-morello-purecap/usr/lib64c/crtend.o
+ld.lld: warning: could not determine size of cap reloc against <unknown kind> (in GOT) end_of_dispatcher_s
+>>> defined in  (/var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-532855.o:(.text+0x9A20))
+>>> referenced by <internal>:(.got+0xD0)
+
+ld.lld: warning: could not determine size of cap reloc against <unknown kind> (in GOT) start_of_dispatcher_s
+>>> defined in  (/var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-532855.o:(.text+0x9690))
+>>> referenced by <internal>:(.got+0xE0)
+
+ld.lld: warning: could not determine size of cap reloc against <unknown kind> (in GOT) disp_thread_data
+>>> defined in  (/var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-532855.o:(.text+0x9950))
+>>> referenced by <internal>:(.got+0x110)
+
+ld.lld: warning: could not determine size of cap reloc against <unknown kind> (in GOT) th_is_pending_ptr
+>>> defined in  (/var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-532855.o:(.text+0x9A10))
+>>> referenced by <internal>:(.got+0x120)
+
+ld.lld: warning: could not determine size of cap reloc against <unknown kind> (in GOT) syscall_wrapper
+>>> defined in  (/var/folders/js/_8675jkj12x9hysbdcj9gbm00000gn/T/dispatcher_aarch64c-532855.o:(.text+0x9884))
+>>> referenced by <internal>:(.got+0x140)

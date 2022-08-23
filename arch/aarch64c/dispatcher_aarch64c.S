@@ -18,13 +18,20 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-.macro START_ROUTINE name 
+.macro START_PC_ROUTINE name 
 .global \name 
-.p2align 2
+.p2align 4
 .type  \name,@function
 .Lfunc_begin_\name:
 .cfi_startproc purecap
 .endm
+
+.macro END_PC_ROUTINE name 
+.Lfunc_end_\name:
+.size \name, .Lfunc_end_\name-.Lfunc_begin_\name
+.cfi_endproc
+.endm
+
 
 #ifdef __aarch64__ 
   #ifdef MORELLOBSD
@@ -45,7 +52,7 @@
 .global start_of_dispatcher_s
 start_of_dispatcher_s:
 
-START_ROUTINE push_neon
+START_PC_ROUTINE push_neon
 
 
 
@@ -68,17 +75,9 @@ push_neon:
   STP Q30, Q31, [PTR_REG(SP),  #480]
   RET
 
-.Lfunc_end_push_neon:
-.size push_neon, .Lfunc_end_push_neon-.Lfunc_begin_push_neon
-.cfi_endproc
+END_PC_ROUTINE push_neon
 
-
-
-.global pop_neon
-.p2align 2
-.type pop_neon,@function
-.Lfunc_begin_pop_neon:
-.cfi_startproc purecap
+START_PC_ROUTINE pop_neon
 
 
 pop_neon:
@@ -100,12 +99,10 @@ pop_neon:
   LDP  Q0,  Q1, [PTR_REG(SP)], #512
   RET
 
-.Lfunc_end_pop_neon:
-.size pop_neon, .Lfunc_end_pop_neon-.Lfunc_begin_pop_neon
-.cfi_endproc
+END_PC_ROUTINE pop_neon
 
+START_PC_ROUTINE push_x4_x21 
 
-.global push_x4_x21
 push_x4_x21:
   STP  GP_REG(4),  GP_REG(5), [PTR_REG(SP), #-(18 * PTR_SIZE)]!
   STP  GP_REG(6),  GP_REG(7), [PTR_REG(SP), #(2 * PTR_SIZE)]
@@ -118,7 +115,10 @@ push_x4_x21:
   STP GP_REG(20), GP_REG(21), [PTR_REG(SP), #(16 * PTR_SIZE)]
   RET
 
-.global pop_x4_x21
+END_PC_ROUTINE push_x4_x21 
+
+START_PC_ROUTINE pop_x4_x21 
+
 pop_x4_x21:
   LDP  GP_REG(6),  GP_REG(7), [PTR_REG(SP), #(2 * PTR_SIZE)]
   LDP  GP_REG(8),  GP_REG(9), [PTR_REG(SP), #(4 * PTR_SIZE)]
@@ -130,8 +130,9 @@ pop_x4_x21:
   LDP GP_REG(20), GP_REG(21), [PTR_REG(SP), #(16 * PTR_SIZE)]
   LDP  GP_REG(4),  GP_REG(5), [PTR_REG(SP)], #(18 * PTR_SIZE)
   RET
+END_PC_ROUTINE pop_x4_x21 
 
-.global dispatcher_trampoline
+START_PC_ROUTINE dispatcher_trampoline
 
 dispatcher_trampoline:
   // PUSH all general purpose registers but X0, X1
@@ -163,11 +164,12 @@ dispatcher_trampoline:
   LDP  GP_REG(2),  GP_REG(3), [PTR_REG(SP)], #(6 * PTR_SIZE)
 
   B checked_cc_return
-
+END_PC_ROUTINE dispatcher_trampoline
+.p2align 4
 dispatcher_addr: .quad dispatcher
 
 
-.global trace_head_incr
+START_PC_ROUTINE trace_head_incr
 trace_head_incr:
   /*
    * X1 = Basic Block number
@@ -186,6 +188,9 @@ trace_head_incr:
   CBZ  W3,  create_trace_trampoline
   LDP  GP_REG(2),  GP_REG(3), [PTR_REG(SP)], #(2 * PTR_SIZE)
   RET
+END_PC_ROUTINE trace_head_incr
+
+START_PC_ROUTINE create_trace_trampoline
 
 create_trace_trampoline:
   LDP GP_REG(2), GP_REG(30), [PTR_REG(SP), #(2 * PTR_SIZE)]
@@ -206,7 +211,7 @@ create_trace_trampoline:
   ADD GP_REG(2), PTR_REG(SP), #(20 * PTR_SIZE)
   LDR GP_REG(0), disp_thread_data
   //LDR GP_REG(3), =create_trace
-  LDR GP_REG(3), create_trace
+  ADR GP_REG(3), create_trace
   BL push_neon
 
   BLR GP_REG(3)
@@ -231,9 +236,11 @@ create_trace_trampoline:
 
   B checked_cc_return
 
+END_PC_ROUTINE create_trace_trampoline
 
 .global syscall_wrapper
 .global syscall_wrapper_svc
+
 syscall_wrapper:
   STP GP_REG(30), GP_REG(29), [PTR_REG(SP), #-(2 * PTR_SIZE)]!
   BL push_x4_x21
@@ -292,15 +299,19 @@ s_w_r:
 //FIXME BR X0 ignore
   B checked_cc_return
 
+.p2align 4
 syscall_handler_pre_addr: .quad syscall_handler_pre
+.p2align 4
 syscall_handler_post_addr: .quad syscall_handler_post
 
 .global disp_thread_data
+.p2align 4
 disp_thread_data: .quad 0
 
 .global send_self_signal
 
-.global checked_cc_return
+
+START_PC_ROUTINE checked_cc_return
 checked_cc_return:
   STR GP_REG(2), [PTR_REG(SP), #-(2 * PTR_SIZE)]!
   LDR GP_REG(2), th_is_pending_ptr
@@ -326,7 +337,7 @@ deliver_signals_trampoline:
   CMP X0, X2
   BEQ .
 
-  LDR GP_REG(3), deliver_signals
+  ADR GP_REG(3), deliver_signals
   BLR GP_REG(3)
 
   MSR NZCV, X19
@@ -363,12 +374,16 @@ abort_self_signal:
   LDR GP_REG(0), [PTR_REG(SP)], #(4 * PTR_SIZE)
   BR GP_REG(0)
 
+END_PC_ROUTINE checked_cc_return
 .global th_is_pending_ptr
+.p2align 4
 th_is_pending_ptr: .quad 0
 
 # place the literal pool before the end_of_dispatcher_s symbol
 .ltorg
 
 .global end_of_dispatcher_s
+.p2align 4
 end_of_dispatcher_s:
+
 
