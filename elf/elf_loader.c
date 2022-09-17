@@ -137,7 +137,7 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
   }
 }
 
-int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintptr_t *entry_addr, bool is_interp) {
+int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintptr_t *entry_addr, bool is_interp, ELF_PHDR **ret_phdr, unsigned int * ret_phdr_num) {
   int fd;
   FILE *file;
   Elf *elf;
@@ -198,7 +198,11 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
   uintptr_t min_addr = UINTPTR_MAX;
   uintptr_t max_addr = 0;
 
+  *ret_phdr = (Elf64_Phdr *) malloc(phnum * sizeof(ELF_PHDR));
+  *ret_phdr_num = phnum;
+
   for (int i = 0; i < phnum; i++) {
+    (*ret_phdr)[i] = phdr[i]; 
     if (phdr[i].p_type == PT_LOAD) {
       uintptr_t end = phdr[i].p_vaddr + phdr[i].p_memsz;
       if (end > max_addr) {
@@ -261,8 +265,8 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
         while(1);
       }
       interp[phdr[i].p_filesz] = '\0';
-      
-      load_elf(interp, ret_elf, auxv, entry_addr, true);
+      //TODO:AA Fix passing in phdr and pdhr-count - We need to deal with the capabilities of shared libraries.
+      //load_elf(interp, ret_elf, auxv, entry_addr, true);
     }
   }
 
@@ -362,7 +366,7 @@ char *copy_string_to_stack(char *string, char **stack_strings) {
 #endif
 #define stack_push(val) stack[stack_i++] = (val);
 
-void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv) {
+void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv, ELF_PHDR * phdr, unsigned int phdr_num) {
   // Allocate a new stack for the execution of the application
   void *stack_space = mmap(NULL, INITIAL_STACK_SIZE, STACK_PROT, STACK_FLAGS, -1, 0);
   printf("\nstack_space - %#p \n ", stack_space);
@@ -411,6 +415,8 @@ printf("\nstack_strings - %#p  \n", stack_strings);
 
 
   ELF_AUXV_T *d_aux = (ELF_AUXV_T *)&stack[stack_i];
+  //we need to know the start address of the new aux for the purecap crt
+  ELF_AUXV_T *d_aux_start = (ELF_AUXV_T *)&stack[stack_i];
   while(s_aux->a_type != AT_NULL) {
     d_aux->a_type = s_aux->a_type;
 
@@ -444,15 +450,20 @@ printf("\nstack_strings - %#p  \n", stack_strings);
       case AT_STACKPROT:
       case AT_BSDFLAGS:
       case AT_ARGC:
-      case AT_ARGV:
       case AT_ENVC:
-      case AT_ENVV:
+      
       case AT_PS_STRINGS:
       case AT_FXRNG:
       case AT_KPRELOAD:
       case AT_COUNT:
+        d_aux->a_un.a_val = s_aux->a_un.a_val;
+        break;
 
-
+      case AT_ARGV:
+      case AT_ENVV:
+        d_aux->a_un.a_ptr = s_aux->a_un.a_ptr;
+        printf("\nAT ARG + ENVV- %#p  \n", d_aux->a_un.a_ptr);
+        break;
 #endif  
 
       case AT_MINSIGSTKSZ:
@@ -471,25 +482,35 @@ printf("\nstack_strings - %#p  \n", stack_strings);
       case AT_EXECFN:
         d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_val, &stack_strings);
         break;    
+    
+      case AT_PHDR:
+
+      d_aux->a_un.a_val = auxv->at_phdr;
+        
+        break;
+
+      case AT_PHNUM:
+        d_aux->a_un.a_val = auxv->at_phnum;
+        break;
 #else
       case AT_EXECPATH:
         d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_ptr, &stack_strings);
         break;    
 
+      case AT_PHDR:
+        d_aux->a_un.a_ptr = phdr;
+        printf("\nAT_PHDR- %#p  \n", phdr);
+        break;
+
+      case AT_PHNUM:
+        d_aux->a_un.a_val = phdr_num;
+        break;
 #endif     
     
 
 
       case AT_BASE:
         d_aux->a_un.a_val = auxv->at_base;
-        break;
-
-      case AT_PHDR:
-        d_aux->a_un.a_val = auxv->at_phdr;
-        break;
-
-      case AT_PHNUM:
-        d_aux->a_un.a_val = auxv->at_phnum;
         break;
 
       case AT_ENTRY:
@@ -536,7 +557,9 @@ printf("\nstack_strings - %#p  \n", stack_strings);
   */
   assert((char *)&stack[stack_i] <= stack_strings);
   printf("\nDBM client entry\n");
-  dbm_client_entry(entry_address, &stack[0]);
+
+  //AA TODO add argv pointer
+  dbm_client_entry(d_aux_start, &stack[0], entry_address);
   
   // If we return here, something is horribly wrong
   while(1);

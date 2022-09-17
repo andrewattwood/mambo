@@ -222,8 +222,11 @@
  # 69 "util.S"
 dbm_client_entry:
   MOV cSP, c1
+  MOV c3, c2
+  mov x1, xzr
+  mov x2, xzr
   STP cZR, cZR, [cSP, #-(2 * 16)]!
-  BR c0
+  BR c3
 
 
 
@@ -232,7 +235,7 @@ dbm_client_entry:
 .cfi_endproc
 
 
- # Thread entry
+ # Thread entry 
  # R0 - new SP
  # R1 - Thread entry instruction
 .global th_enter

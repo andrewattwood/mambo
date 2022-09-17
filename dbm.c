@@ -650,14 +650,18 @@ int main(int argc, char **argv, char **envp) {
   global_data.brk = 0;
   struct elf_loader_auxv auxv;
   uintptr_t entry_address;
-  load_elf(argv[1], &elf, &auxv, &entry_address, false);
+  ELF_PHDR * phdr;
+  unsigned int phdr_num;
+
+  printf("load elf phdr = %#p\n",phdr);
+  load_elf(argv[1], &elf, &auxv, &entry_address, false, &phdr ,&phdr_num);
   debug("entry address: 0x%" PRIxPTR "\n", entry_address);
   #define ARGDIFF 2
 
 //we need to modify elf run to jump to the entry address instead of the first scanned basic block.  
   //elf_run(block_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
   printf("running elf");
-  elf_run(entry_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
+  elf_run(entry_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv, phdr, phdr_num);
 
 
   // Set up brk emulation
