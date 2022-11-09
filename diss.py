@@ -12,7 +12,7 @@ INPUT = "diss.txt"
 DUMPOUT = TMP + "/obdumpout"
 DUMPOUTFORMAT = TMP + "/dumpoutformat"
 fin = open(INPUT, "r")
-fout = open(SOURCE, "w")
+fout = ßßßxß3625open(SOURCE, "w")
 firstline = 0
 linenumber = 0
 for line in fin:
@@ -27,7 +27,7 @@ fout.close()
 
 proc = subprocess.check_output(CLANG + FLAGS + SOURCE + " -o " + OUTPUT,shell=True)
 proc = subprocess.check_output(OBJDUMP + "-d " + OUTPUT + " > " + DUMPOUT,shell=True)
-
+——
 
 dumpoutformat = open(DUMPOUTFORMAT,"w")
 dumpout = open(DUMPOUT, "r")
