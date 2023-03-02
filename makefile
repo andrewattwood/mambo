@@ -37,6 +37,15 @@ ifdef ($(MORELLO))
 
 endif
 
+ELF_PATCH=morello_elf
+MUSL_LIB=../../morello-aarch64/morello/musl-bin/lib/
+
+ifeq ($(MORELLO), pure-linux-mieshim)
+	CFLAGS+=-mabi=purecap -c -nostdinc -isystem ../../morello-aarch64/morello/musl-bin/include/ -ferror-limit=10 
+	CFLAGS+= --target=aarch64-linux-gnu  -march=morello+c64 -I/home/sysadmin/moate/libelf/include 
+endif	
+
+
 ifeq ($(MORELLO), pure-freebsd)
 	CFLAGS+=-DMORELLOBSD -D_BSD_SOURCE -v
 	CFLAGS+=-mabi=purecap -femulated-tls --sysroot=$(CHERIOUTPUT)/rootfs-morello-purecap -ferror-limit=10 -Wcheri-provenance
@@ -53,6 +62,9 @@ LIBS=-lelf -lpthread -lz
 HEADERS=*.h makefile
 ifeq ($(MORELLO), pure-freebsd)
 	INCLUDES=-I$(FREEBSD) -I$(CHERIOUTPUT)/rootfs-morello-purecap/usr/include/cheri/ -I. 
+	INCLUDES+=/home/sysadmin/moate/zlib-1.2.13/install/include
+else ifeq ($(MORELLO), pure-linux-mieshim)
+	INCLUDES=-I/home/sysadmin/moate/libelf/lib/ /home/sysadmin/moate/libelf/include
 else
 	INCLUDES=-I/usr/include/libelf -I.
 endif
@@ -61,23 +73,33 @@ SOURCES= common.c dbm.c traces.c syscalls.c dispatcher.c signals.c util.S
 SOURCES+=api/helpers.c api/plugin_support.c api/branch_decoder_support.c api/load_store.c api/internal.c api/hash_table.c
 SOURCES+=elf/elf_loader.o elf/symbol_parser.o
 
-HEADERS += api/emit_a64c.h
-LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x600000)
-PIE += pie/pie-a64c-field-decoder.o pie/pie-a64c-encoder.o pie/pie-a64c-decoder.o
-SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
-SOURCES += arch/aarch64c/scanner_a64c.c
-SOURCES += api/emit_a64c.c
+#HEADERS += api/emit_a64c.h
+#LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x600000)
+#PIE += pie/pie-a64c-field-decoder.o pie/pie-a64c-encoder.o pie/pie-a64c-decoder.o
+#SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
+#SOURCES += arch/aarch64c/scanner_a64c.c
+#SOURCES += api/emit_a64c.c
 
 ARCH=$(shell $(CC) -dumpmachine | awk -F '-' '{print $$1}')
-ifdef $(MORELLO)
+ifeq ($(MORELLO), pure-linux-mieshim)
+	HEADERS += api/emit_a64c.h 
+	LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x7000000000)
+	LDFLAGS += -fuse-ld=lld $(MUSL_LIB)/crt1.o $(MUSL_LIB)/crti.o $(CLANG_RESOURCE_DIR)/lib/linux/clang_rt.crtbegin-morello.o -I /home/sysadmin/moate/libelf/include
+	LDFLAGS += $(CLANG_RESOURCE_DIR)/lib/linux/libclang_rt.builtins-morello.a 
+    LDFLAGS += $(CLANG_RESOURCE_DIR)/lib/linux/clang_rt.crtend-morello.o $(MUSL_LIB)/crtn.o -nostdlib -L$(MUSL_LIB) -lc
+	LDFLAGS += /home/sysadmin/moate/zlib-1.2.13/install/lib/libz.a
+	PIE += pie/pregenerated/pie-a64c-field-decoder.o pie/pregenerated/pie-a64c-encoder.o pie/pregenerated/pie-a64c-decoder.o
+	SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
+	SOURCES += arch/aarch64c/scanner_a64c.c
+	SOURCES += api/emit_a64c.c
+else ifdef $(MORELLO)
 	HEADERS += api/emit_a64c.h
 	LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x7000000000)
 	PIE += pie/pregenerated/pie-a64c-field-decoder.o pie/pregenerated/pie-a64c-encoder.o pie/pregenerated/pie-a64c-decoder.o
 	SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
 	SOURCES += arch/aarch64c/scanner_a64c.c
 	SOURCES += api/emit_a64c.c
-elif
-ifeq ($(findstring arm, $(ARCH)), arm)
+else ifeq ($(findstring arm, $(ARCH)), arm)
 	CFLAGS += -march=armv7-a -mfpu=neon
 	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0xa8000000)
 	HEADERS += api/emit_arm.h api/emit_thumb.h
@@ -86,9 +108,7 @@ ifeq ($(findstring arm, $(ARCH)), arm)
 	SOURCES += arch/aarch32/dispatcher_aarch32.S arch/aarch32/dispatcher_aarch32.c
 	SOURCES += arch/aarch32/scanner_t32.c arch/aarch32/scanner_a32.c
 	SOURCES += api/emit_arm.c api/emit_thumb.c
-endif
-
-ifeq ($(ARCH),aarch64)
+else ifeq ($(ARCH),aarch64)
 	HEADERS += api/emit_a64.h
 	LDFLAGS += -Wl,-Ttext-segment=$(or $(TEXT_SEGMENT),0x7000000000)
 	PIE += pie/pie-a64-field-decoder.o pie/pie-a64-encoder.o pie/pie-a64-decoder.o
@@ -96,7 +116,7 @@ ifeq ($(ARCH),aarch64)
 	SOURCES += arch/aarch64/scanner_a64.c
 	SOURCES += api/emit_a64.c
 endif
-endif
+
 
 ifdef PLUGINS
 	CFLAGS += -DPLUGINS_NEW
@@ -107,6 +127,7 @@ endif
 all:
 	$(info MAMBO: detected architecture "$(ARCH)")
 	@$(MAKE) --no-print-directory pie && $(MAKE) --no-print-directory $(or $(OUTPUT_FILE),dbm)
+	$(ELF_PATCH) dbm
 
 pie:
 	@$(MAKE) --no-print-directory -C pie/ native
