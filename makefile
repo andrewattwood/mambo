@@ -23,7 +23,7 @@
 
 
 VERSION?=$(shell git describe --abbrev=8 --dirty --always || echo '\<nogit\>')
-CFLAGS+=-D_GNU_SOURCE -g -std=gnu99 -O0 -Wunused-variable 
+CFLAGS+=-D_GNU_SOURCE -g -std=gnu99 -O0 -Wunused-variable -DMORELLO
 CFLAGS+=-DVERSION=\"$(VERSION)\"
 
 COMP=GCC
@@ -38,11 +38,10 @@ ifdef ($(MORELLO))
 endif
 
 ELF_PATCH=morello_elf
-MUSL_LIB=../../morello-aarch64/morello/musl-bin/lib/
 
 ifeq ($(MORELLO), pure-linux-mieshim)
-	CFLAGS+=-mabi=purecap -c -nostdinc -isystem ../../morello-aarch64/morello/musl-bin/include/ -ferror-limit=10 
-	CFLAGS+= --target=aarch64-linux-gnu  -march=morello+c64 -I/home/sysadmin/moate/libelf/include 
+	CFLAGS+=-mabi=purecap  -nostdinc -I$(MUSL_BIN)/include -I$(LINUX_HEADERS) -I$(MUSL_LIB)/include/ -ferror-limit=10 
+	CFLAGS+= --target=aarch64-linux-gnu  -march=morello+c64 -I$(LIBELF)/include -v 
 endif	
 
 
@@ -58,13 +57,17 @@ endif
 
 
 LDFLAGS+=-static -ldl
-LIBS=-lelf -lpthread -lz
+
+ifneq ($(MORELLO), pure-linux-mieshim)
+	LIBS=-lelf -lpthread -lz
+endif
+
 HEADERS=*.h makefile
 ifeq ($(MORELLO), pure-freebsd)
 	INCLUDES=-I$(FREEBSD) -I$(CHERIOUTPUT)/rootfs-morello-purecap/usr/include/cheri/ -I. 
-	INCLUDES+=/home/sysadmin/moate/zlib-1.2.13/install/include
+	INCLUDES+= -I/home/sysadmin/moate/zlib-1.2.13/install/include
 else ifeq ($(MORELLO), pure-linux-mieshim)
-	INCLUDES=-I/home/sysadmin/moate/libelf/lib/ /home/sysadmin/moate/libelf/include
+	INCLUDES=-I/home/sysadmin/moate/libelf/lib/ -I/home/sysadmin/moate/libelf/include
 else
 	INCLUDES=-I/usr/include/libelf -I.
 endif
@@ -84,18 +87,18 @@ ARCH=$(shell $(CC) -dumpmachine | awk -F '-' '{print $$1}')
 ifeq ($(MORELLO), pure-linux-mieshim)
 	HEADERS += api/emit_a64c.h 
 	LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x7000000000)
-	LDFLAGS += -fuse-ld=lld $(MUSL_LIB)/crt1.o $(MUSL_LIB)/crti.o $(CLANG_RESOURCE_DIR)/lib/linux/clang_rt.crtbegin-morello.o -I /home/sysadmin/moate/libelf/include
-	LDFLAGS += $(CLANG_RESOURCE_DIR)/lib/linux/libclang_rt.builtins-morello.a 
-    LDFLAGS += $(CLANG_RESOURCE_DIR)/lib/linux/clang_rt.crtend-morello.o $(MUSL_LIB)/crtn.o -nostdlib -L$(MUSL_LIB) -lc
-	LDFLAGS += /home/sysadmin/moate/zlib-1.2.13/install/lib/libz.a
-	PIE += pie/pregenerated/pie-a64c-field-decoder.o pie/pregenerated/pie-a64c-encoder.o pie/pregenerated/pie-a64c-decoder.o
-	SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
+	LDFLAGS += -fuse-ld=lld $(MUSL_LIB)/lib/crt1.o $(MUSL_LIB)/lib/crti.o $(CLANG_RESOURCE_DIR)/lib/aarch64-unknown-linux-musl_purecap/clang_rt.crtbegin.o  -I /home/sysadmin/moate/libelf/include
+	LDFLAGS += $(CLANG_RESOURCE_DIR)/lib/aarch64-unknown-linux-musl_purecap/libclang_rt.builtins.a
+    LDFLAGS += $(CLANG_RESOURCE_DIR)/lib/aarch64-unknown-linux-musl_purecap/clang_rt.crtend.o $(MUSL_LIB)/lib/crtn.o -nostdlib -nolibc  -L$(MUSL_LIB) -lc
+#	LDFLAGS += $(zlib)/install/lib/libz.a
+	PIE += pie/pie-a64c-field-decoder.o pie/pie-a64c-encoder.o pie/pie-a64c-decoder.o
+	SOURCES += arch/aarch64c/dispatcher_aarch64c-asm.S arch/aarch64c/dispatcher_aarch64c.c
 	SOURCES += arch/aarch64c/scanner_a64c.c
 	SOURCES += api/emit_a64c.c
 else ifdef $(MORELLO)
 	HEADERS += api/emit_a64c.h
 	LDFLAGS += -Wl,--image-base=$(or $(TEXT_SEGMENT),0x7000000000)
-	PIE += pie/pregenerated/pie-a64c-field-decoder.o pie/pregenerated/pie-a64c-encoder.o pie/pregenerated/pie-a64c-decoder.o
+	PIE += pie/pregenerated/pie-a64c-field-decoder.o pie/pregenerated/pie-a64c-encoder.o pie/pie-a64c-decoder.o
 	SOURCES += arch/aarch64c/dispatcher_aarch64c.S arch/aarch64c/dispatcher_aarch64c.c
 	SOURCES += arch/aarch64c/scanner_a64c.c
 	SOURCES += api/emit_a64c.c
@@ -132,12 +135,12 @@ all:
 pie:
 	@$(MAKE) --no-print-directory -C pie/ native
 
-%.o: %.c %.h
+%.o: %.c %.h %.s
 	$(info MAMBO :-)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) --sysroot=${MUSL_BIN} -save-temps=obj -c -o out/$@ $<
 
 $(or $(OUTPUT_FILE),dbm): $(HEADERS) $(SOURCES) $(PLUGINS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OPTS) $(INCLUDES) -o $@ $(SOURCES) $(PLUGINS) $(PIE) $(LIBS) $(PLUGIN_ARGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OPTS) $(INCLUDES) -save-temps=obj  -o out/$@ $(SOURCES) $(PLUGINS) $(PIE) $(LIBS) $(PLUGIN_ARGS) -v -nostdlib
 
 cachesim:
 	PLUGINS="plugins/cachesim/cachesim.c plugins/cachesim/cachesim.S plugins/cachesim/cachesim_model.c" OUTPUT_FILE=mambo_cachesim make
@@ -151,8 +154,8 @@ clean:
 cleanall: clean
 	$(MAKE) -C pie/ clean
 
-api/emit_%.c: pie/pie-%-encoder.c api/generate_emit_wrapper.rb
-	ruby api/generate_emit_wrapper.rb $< > $@
+#api/emit_%.c: pie/pie-%-encoder.c api/generate_emit_wrapper.rb
+#	ruby api/generate_emit_wrapper.rb $< > $@
 
-api/emit_%.h: pie/pie-%-encoder.c api/generate_emit_wrapper.rb
-	ruby api/generate_emit_wrapper.rb $< header > $@
+#api/emit_%.h: pie/pie-%-encoder.c api/generate_emit_wrapper.rb
+#	ruby api/generate_emit_wrapper.rb $< header > $@

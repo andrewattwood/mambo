@@ -27,7 +27,7 @@
   #include "pie/pie-thumb-field-decoder.h"
   #include "pie/pie-thumb-decoder.h"
 #elif __aarch64__
-#ifdef MORELLOBSD
+#ifdef MORELLO
   #include "api/emit_a64c.h"
   #include "pie/pie-a64c-field-decoder.h"
   #include "pie/pie-a64c-decoder.h"

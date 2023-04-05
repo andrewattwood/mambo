@@ -35,7 +35,7 @@
 #include "pie/pie-arm-encoder.h"
 #elif __aarch64__
 
-#ifdef MORELLOBSD
+#ifdef MORELLO
 #include "pie/pie-a64c-encoder.h"
 #include "pie/pie-a64c-decoder.h"
 #include "pie/pie-a64c-field-decoder.h"

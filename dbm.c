@@ -17,7 +17,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
+#include <sys/auxv.h>
+#include <errno.h>
+#include <sys/auxv.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -95,6 +97,24 @@ void flush_code_cache(dbm_thread *thread_data) {
   }
 
   linked_list_init(thread_data->cc_links, MAX_CC_LINKS);
+}
+
+void pp_cap(void *__capability ptr)
+{
+    uint64_t length = cheri_length_get(ptr);
+    uint64_t address = cheri_address_get(ptr);
+    uint64_t base = cheri_base_get(ptr);
+    uint64_t flags = cheri_flags_get(ptr);
+    uint64_t perms = cheri_perms_get(ptr);
+    uint64_t type = cheri_type_get(ptr);
+    bool tag = cheri_tag_get(ptr);
+
+    uint64_t offset = cheri_offset_get(ptr);
+
+    printf("Capability: %#lp\n", ptr);
+    printf("Tag: %d, Perms: %04lx, Type: %lx, Address: %04lx, Base: %04lx, End: %04lx, Flags: %lx, "
+           "Length: %04lx, Offset: %04lx\n",
+           tag, perms, type, address, base, base + length, flags, length, offset);
 }
 
 uintptr_t cc_lookup(dbm_thread *thread_data, uintptr_t target) {
@@ -234,7 +254,7 @@ uintptr_t scan(dbm_thread *thread_data, uint16_t *address, int basic_block) {
   }
 #endif
 #ifdef __aarch64__
-#ifdef MORELLOBSD
+#ifdef MORELLO
  block_size = scan_a64c(thread_data, (uint32_t *)address, basic_block, mambo_bb, NULL);
 #else
  block_size = scan_a64(thread_data, (uint32_t *)address, basic_block, mambo_bb, NULL);
@@ -477,8 +497,10 @@ void reset_process(dbm_thread *thread_data) {
       printf, which might have been locked by a different thread in the parent
       process. Here we open new, unlocked, stdout and stderr streams.
   */
-  stdout = fdopen(1, "a");
-  stderr = fdopen(2, "a");
+
+  //MORELLO-FIXME
+  //stdout = fdopen(1, "a");
+  //stderr = fdopen(2, "a");
 
   mambo_deliver_callbacks(PRE_THREAD_C, thread_data);
 }
@@ -616,10 +638,10 @@ void notify_vm_op(vm_op_t op, uintptr_t addr, size_t size, int prot, int flags, 
 #endif
 }
 
-int main(int argc, char **argv, char **envp) {
+int main(int argc, char **argv, char **envp) {  
+  
   printf("starting mambo");
   Elf *elf = NULL;
-  
   if (argc < 2) {
     printf("Syntax: dbm elf_file arguments\n");
     exit(EXIT_FAILURE);
@@ -649,6 +671,7 @@ int main(int argc, char **argv, char **envp) {
 
   global_data.brk = 0;
   struct elf_loader_auxv auxv;
+
   uintptr_t entry_address;
   ELF_PHDR * phdr;
   unsigned int phdr_num;

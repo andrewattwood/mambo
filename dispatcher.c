@@ -93,7 +93,7 @@ void dispatcher(const uintptr_t target, const uint32_t source_index,
 #endif
 #ifdef __aarch64__
 
-#ifdef MORELLOBSD
+#ifdef MORELLO
   dispatcher_aarch64c(thread_data, source_index, source_branch_type, target,
                      *next_addr);
 #else

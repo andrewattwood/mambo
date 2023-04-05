@@ -31,7 +31,7 @@
   #include "../pie/pie-arm-field-decoder.h"
 #endif
 #ifdef __aarch64__
-#ifdef MORELLOBSD
+#ifdef MORELLO
   #include "../pie/pie-a64c-decoder.h"
   #include "../pie/pie-a64c-field-decoder.h"
 #else

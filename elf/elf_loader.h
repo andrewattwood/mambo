@@ -17,8 +17,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+#ifndef ELF_LOADER_H
+#define ELF_LOADER_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __arm__
   #define ELF_CLASS  ELFCLASS32
@@ -43,7 +46,6 @@
   #endif
 #endif
 
-
 struct elf_loader_auxv {
   uintptr_t at_base;
   uintptr_t at_entry;
@@ -51,6 +53,12 @@ struct elf_loader_auxv {
   uintptr_t at_phnum;
 };
 
+#ifdef MORELLOBSD
 int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintptr_t *entry_addr, bool is_interp, ELF_PHDR **ret_phdr, unsigned int * ret_phdr_num);
 void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv, ELF_PHDR * phdr, unsigned int phdr_num);
+#else
+int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintptr_t *entry_addr, bool is_interp, ELF_PHDR **ret_phdr, unsigned int * ret_phdr_num);
+void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv, ELF_PHDR * phdr, unsigned int phdr_num);
+#endif
 
+#endif

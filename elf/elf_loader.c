@@ -220,9 +220,9 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
     assert(min_addr != 0);
   }
 
-  base_addr = mmap((void *)min_addr, align_higher(max_addr - min_addr, PAGE_SIZE) , PROT_READ | PROT_WRITE | PROT_EXEC , MAP_ANONYMOUS , -1, 0);
+  base_addr = mmap((void *)min_addr, align_higher(max_addr - min_addr, PAGE_SIZE) ,  PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE , -1, 0);
 
-  printf("\nAllocate memory region - Min Address = %x Max address = %x, base address = %x, size = %x\n",min_addr, align_higher(max_addr - min_addr, PAGE_SIZE),base_addr,(max_addr - min_addr));
+  printf("\n1 Allocate memory region - Min Address = %x Max address = %x, base address = %x, size = %x\n",min_addr, align_higher(max_addr - min_addr, PAGE_SIZE),base_addr,(max_addr - min_addr));
 
   if (ehdr->e_type == ET_DYN) {
     assert(base_addr != MAP_FAILED);
@@ -237,7 +237,7 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
 
   /* entry address is the actual execution entry point, either in the interpreter
      (if one is used), or in the executable */
-  *entry_addr = cheri_setaddress(base_addr,ehdr->e_entry);
+  *entry_addr = __builtin_cheri_address_set(base_addr,ehdr->e_entry);
 
   // AT_ENTRY in the AUXV points to the original executable
   if (!is_interp) {
@@ -314,6 +314,8 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
 }
 
 size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv) {
+  
+  printf("starting stack size check\n");
   size_t size = (4 + argc) * sizeof(uintptr_t); // ARGC, ARGV[0], NULL after ARGs and ENVP
   size += 16; // AT_RANDOM
   size += strlen(filename) + 1;
@@ -325,15 +327,19 @@ size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp, 
   for (; *envp != NULL; envp++) {
     size += sizeof(uintptr_t) + strlen(*envp) + 1;
   }
-#ifdef MORELLOBSD
-  ELF_AUXV_T *s_aux = __auxargs;
+
+  
+#ifdef MORELLO
+  ELF_AUXV_T *s_aux = getauxv();
 #else 
-  ELF_AUXV_T *s_aux = (ELF_AUXV_T *)(envp + 1);
+  ELF_AUXV_T *s_aux = auxv;
 #endif 
+printf("s_aux cap info %#p \n",s_aux);
 
-
+printf("starting aux check \n");
   while(s_aux->a_type != AT_NULL) {
-  #ifndef MORELLOBSD
+    printf("SAUX \n");
+  #ifndef MORELLO
     switch(s_aux->a_type) {
       case AT_PLATFORM:
       case AT_EXECFN: {
@@ -409,6 +415,8 @@ printf("\nstack_strings - %#p  \n", stack_strings);
 
 #ifdef MORELLOBSD
   ELF_AUXV_T *s_aux = __auxargs;
+#elif MORELLO
+  ELF_AUXV_T *s_aux = getauxv();
 #else 
    ELF_AUXV_T *s_aux = (ELF_AUXV_T *)(envp + 1);
 #endif 
@@ -470,7 +478,51 @@ printf("\nstack_strings - %#p  \n", stack_strings);
       case AT_PHENT:
         d_aux->a_un.a_val = s_aux->a_un.a_val;
         break;
-#ifndef MORELLOBSD
+#ifdef MORELLOBSD
+        case AT_EXECPATH:
+        d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_ptr, &stack_strings);
+        break;    
+
+      case AT_PHDR:
+        d_aux->a_un.a_ptr = phdr;
+        printf("\nAT_PHDR- %#p  \n", phdr);
+        break;
+
+      case AT_PHNUM:
+        d_aux->a_un.a_val = phdr_num;
+        break;
+
+#elif MORELLO
+        case AT_CHERI_EXEC_RW_CAP:
+        case AT_CHERI_EXEC_RX_CAP:{
+        d_aux->a_un.a_ptr = s_aux->a_un.a_ptr;
+        break;
+        }
+        case AT_PHDR:
+        d_aux->a_un.a_ptr = phdr;
+        printf("\nAT_PHDR- %#p  \n", phdr);
+        break;
+
+      case AT_PHNUM:
+        d_aux->a_un.a_val = phdr_num;
+        break;
+
+      case AT_RANDOM: {
+        pp_cap(stack_strings);
+        stack_strings -= 15;
+        memcpy(stack_strings, (void *)s_aux->a_un.a_val, 16);
+        d_aux->a_un.a_val = (uintptr_t)stack_strings;
+        stack_strings--;
+        break;
+      }
+      case AT_PLATFORM:
+      case AT_EXECFN:
+        d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_val, &stack_strings);
+        break;    
+    
+
+#else
+
       case AT_RANDOM: {
         stack_strings -= 15;
         memcpy(stack_strings, (void *)s_aux->a_un.a_val, 16);
@@ -492,19 +544,7 @@ printf("\nstack_strings - %#p  \n", stack_strings);
       case AT_PHNUM:
         d_aux->a_un.a_val = auxv->at_phnum;
         break;
-#else
-      case AT_EXECPATH:
-        d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_ptr, &stack_strings);
-        break;    
-
-      case AT_PHDR:
-        d_aux->a_un.a_ptr = phdr;
-        printf("\nAT_PHDR- %#p  \n", phdr);
-        break;
-
-      case AT_PHNUM:
-        d_aux->a_un.a_val = phdr_num;
-        break;
+      
 #endif     
     
 
