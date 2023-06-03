@@ -99,23 +99,7 @@ void flush_code_cache(dbm_thread *thread_data) {
   linked_list_init(thread_data->cc_links, MAX_CC_LINKS);
 }
 
-void pp_cap(void *__capability ptr)
-{
-    uint64_t length = cheri_length_get(ptr);
-    uint64_t address = cheri_address_get(ptr);
-    uint64_t base = cheri_base_get(ptr);
-    uint64_t flags = cheri_flags_get(ptr);
-    uint64_t perms = cheri_perms_get(ptr);
-    uint64_t type = cheri_type_get(ptr);
-    bool tag = cheri_tag_get(ptr);
 
-    uint64_t offset = cheri_offset_get(ptr);
-
-    printf("Capability: %#lp\n", ptr);
-    printf("Tag: %d, Perms: %04lx, Type: %lx, Address: %04lx, Base: %04lx, End: %04lx, Flags: %lx, "
-           "Length: %04lx, Offset: %04lx\n",
-           tag, perms, type, address, base, base + length, flags, length, offset);
-}
 
 uintptr_t cc_lookup(dbm_thread *thread_data, uintptr_t target) {
   uintptr_t addr = hash_lookup(&thread_data->entry_address, target);
@@ -683,8 +667,6 @@ int main(int argc, char **argv, char **envp) {
 
 //we need to modify elf run to jump to the entry address instead of the first scanned basic block.  
   //elf_run(block_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
-  printf("running elf");
-  elf_run(entry_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv, phdr, phdr_num);
 
 
   // Set up brk emulation
@@ -715,6 +697,8 @@ int main(int argc, char **argv, char **envp) {
   uintptr_t block_address = scan(thread_data, (uint16_t *)entry_address, ALLOCATE_BB);
   debug("Address of first basic block is: 0x%" PRIxPTR "\n", block_address);
 
+  printf("running elf");
+  elf_run(entry_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv, phdr, phdr_num);
 
 
   return 0;

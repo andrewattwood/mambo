@@ -1,3 +1,4 @@
+out/
 dbm
 elf/elf_loader.o
 elf/symbol_parser.o

@@ -41,7 +41,7 @@ ELF_PATCH=morello_elf
 
 ifeq ($(MORELLO), pure-linux-mieshim)
 	CFLAGS+=-mabi=purecap  -nostdinc -I$(MUSL_BIN)/include -I$(LINUX_HEADERS) -I$(MUSL_LIB)/include/ -ferror-limit=10 
-	CFLAGS+= --target=aarch64-linux-gnu  -march=morello+c64 -I$(LIBELF)/include -v 
+	CFLAGS+= --target=aarch64-linux-gnu  -march=morello+c64 -I$(LIBELF)/include -v -I/home/sysadmin/morello_workspace/morello-aarch64/morello/toolchain/llvm-project-releases-morello-linux-release-1.5/lib/clang/13.0.0/include/ 
 endif	
 
 
@@ -65,9 +65,9 @@ endif
 HEADERS=*.h makefile
 ifeq ($(MORELLO), pure-freebsd)
 	INCLUDES=-I$(FREEBSD) -I$(CHERIOUTPUT)/rootfs-morello-purecap/usr/include/cheri/ -I. 
-	INCLUDES+= -I/home/sysadmin/moate/zlib-1.2.13/install/include
+	INCLUDES+= -I/home/sysadmin/moate/zlib-1.2.13/install/include 
 else ifeq ($(MORELLO), pure-linux-mieshim)
-	INCLUDES=-I/home/sysadmin/moate/libelf/lib/ -I/home/sysadmin/moate/libelf/include
+	INCLUDES=-I/home/sysadmin/moate/libelf/lib/ -I/home/sysadmin/moate/libelf/include 
 else
 	INCLUDES=-I/usr/include/libelf -I.
 endif

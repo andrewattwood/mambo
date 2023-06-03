@@ -24,7 +24,8 @@
 #define __DBM_UTIL_H__
 
 //extern void dbm_client_entry(uintptr_t addr, uintptr_t *stack_top);
-extern void dbm_client_entry( uintptr_t * auxv ,uintptr_t *stack_top, uintptr_t addr);
+//dbm_client_entry(argc + 1,argv_new, envp_new , d_aux_start, &stack[0], entry_address);
+extern void dbm_client_entry(uint argc, uintptr_t * argv ,uintptr_t * envp ,uintptr_t * auxv ,uintptr_t * stack_top, uintptr_t  addr);
 extern void debug_print(char * to_print);
 
 extern uint32_t atomic_increment_u32(uint32_t *loc, uint32_t inc);

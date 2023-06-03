@@ -1,0 +1,4 @@
+MAMBO: detected architecture "x86_64"
+PIE: detected architecture "x86_64"
+make[2]: Nothing to be done for 'native'.
+/home/sysadmin/morello_workspace/morello-aarch64/morello/toolchain/llvm-project-releases-morello-linux-release-1.5/bin/clang -D_GNU_SOURCE -g -std=gnu99 -O0 -Wunused-variable -DMORELLO -DVERSION=\"1178db9c-dirty\" -mabi=purecap  -nostdinc -I../../morello_workspace/morello-aarch64/morello/musl-bin2//include -I../../morello_workspace/morello-aarch64/morello/projects/morello-linux-headers/usr/include/ -I../../morello_workspace/morello-aarch64/morello/musl-libc2//include/ -ferror-limit=10  --target=aarch64-linux-gnu  -march=morello+c64 -I../libelf//include -v    -c -o elf/elf_loader.o elf/elf_loader.c

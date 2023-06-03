@@ -49,6 +49,31 @@ extern Elf_Auxinfo *__auxargs;
 
 extern void *__ehdr_start;
 
+#ifdef MORELLO
+
+#include "cheriintrin.h"
+
+void pp_cap(void *__capability ptr)
+{
+    uint64_t length = cheri_length_get(ptr);
+    uint64_t address = cheri_address_get(ptr);
+    uint64_t base = cheri_base_get(ptr);
+    uint64_t flags = cheri_flags_get(ptr);
+    uint64_t perms = cheri_perms_get(ptr);
+    uint64_t type = cheri_type_get(ptr);
+    bool tag = cheri_tag_get(ptr);
+
+    uint64_t offset = cheri_offset_get(ptr);
+
+    printf("Capability: %#lp\n", ptr);
+    printf("Tag: %d, Perms: %04lx, Type: %lx, Address: %04lx, Base: %04lx, End: %04lx, Flags: %lx, "
+           "Length: %04lx, Offset: %04lx\n",
+           tag, perms, type, address, base, base + length, flags, length, offset);
+}
+#endif
+
+uintptr_t * relo;
+
 void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, bool is_interp) {
   uint32_t *mem;
   int prot = 0;
@@ -78,7 +103,12 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
 
   aligned_vaddr = align_lower(phdr->p_vaddr, PAGE_SIZE);
   page_offset = phdr->p_vaddr - aligned_vaddr;
+   void * cap_base_addr = (void *)base_addr + ((void *)aligned_vaddr - (void *)base_addr );
+  //if(cap_base_addr == 0x236000)
+  //aligned_fsize = phdr->p_filesz;
+  //else
   aligned_fsize = align_higher(phdr->p_filesz + page_offset, PAGE_SIZE);
+
   map_file_end = phdr->p_vaddr + phdr->p_filesz;
   aligned_msize = align_higher(phdr->p_memsz + page_offset, PAGE_SIZE);
 
@@ -86,17 +116,30 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
   #define MAP_EL_FILE (MAP_PRIVATE|MAP_FIXED)
 
   off_t offset = phdr->p_offset - page_offset;
-  printf("\nmmap\n");
+  printf("\n\n\n\n\n----- mmap ----- \n");
   //prot = -1;
   printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d, offset - %p, fd - %d\n", aligned_vaddr,aligned_vaddr + aligned_fsize ,aligned_fsize , prot, offset, fd );
-  void * cap_base_addr = (void *)base_addr + ((void *)aligned_vaddr - (void *)base_addr );
+ 
   printf("\n Test address %p", cap_base_addr);
 
   mem = mmap(cap_base_addr, aligned_fsize, prot,
              MAP_EL_FILE, fd, offset);
 
+  if(cap_base_addr == 0x200000){
+    relo = mem;
+    pp_cap(relo);
+  }
+
   if(mem == MAP_FAILED){
     printf("Oh dear, something went wrong with mmap()! %s\n", strerror(errno));
+  }
+  if(cap_base_addr == 0x236000)
+  {
+    uint32_t align_offset = phdr->p_vaddr - aligned_vaddr;
+    for(uint32_t i = (align_offset +  phdr->p_filesz) /4; i <  (aligned_fsize - phdr->p_filesz) /4; i++)
+    {
+      mem[i] = 0;
+    }
   }
   assert(mem != MAP_FAILED);
   int flags = MAP_EL_FILE|(is_interp ? MAP_INTERP : MAP_APP);
@@ -106,16 +149,18 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
   // Zero the area from (vaddr + filesize) to the end of the page
   if (phdr->p_flags & PF_W) {
     printf("\nmemset\n");
-    memset((void *)mem + phdr->p_filesz, 0, (aligned_vaddr + aligned_fsize) - map_file_end);
+    //TODO this needs to be fixed as it is zeroing the relo section needed for the init capabilities. 
+    //memset((void *)mem + phdr->p_filesz, 0, (aligned_vaddr + aligned_fsize) - map_file_end);
   }
 
   // Allocate anonymous pages if aligned memsize > filesize
-  /*
+  
   #define MAP_EL_ANON (MAP_EL_FILE)
-  if (aligned_msize > aligned_fsize) {
-    void * remap_cap_base = cap_base_addr + ((void *)aligned_vaddr - (void *)cap_base_addr) + aligned_fsize;
+  if ((aligned_msize > aligned_fsize) && (cap_base_addr == 0x236000)) {
+    //void * remap_cap_base = cap_base_addr + ((void *)phdr->p_vaddr - (void *)cap_base_addr) + aligned_fsize;
+    void * remap_cap_base = cheri_address_set(cap_base_addr, phdr->p_vaddr);
     printf("\nmapping non file space\n");
-    printf("aligned_base_vaddr - %p, top_address - %p,aligned_fsize %p, prot %d\n", remap_cap_base,remap_cap_base + (aligned_msize-aligned_fsize) ,aligned_msize-aligned_fsize , prot );
+    printf("remap_cap_base - %p, top_address - %p,\n", remap_cap_base,aligned_msize-aligned_fsize  );
 
     mem = mmap( remap_cap_base  , aligned_msize-aligned_fsize , prot,
                MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -125,7 +170,8 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
     notify_vm_op(VM_MAP, aligned_vaddr + aligned_fsize, aligned_msize-aligned_fsize,
                  prot | ((phdr->p_flags & PF_X) ? PROT_EXEC : 0), MAP_EL_ANON, -1, 0);
   }
-*/
+
+
 #ifdef ENABLE_EXECUTE
   if (phdr->p_flags & PF_X) {
     __clear_cache((char *)phdr->p_vaddr, (char *)phdr->p_vaddr + (char *)phdr->p_memsz);
@@ -139,7 +185,7 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
 
 int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintptr_t *entry_addr, bool is_interp, ELF_PHDR **ret_phdr, unsigned int * ret_phdr_num) {
   int fd;
-  FILE *file;
+  FILE *file,*file_elo;
   Elf *elf;
   Elf_Kind kind;
   ELF_EHDR *ehdr;
@@ -300,6 +346,25 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
           }
         }
         break;
+      /*case PT_GNU_RELRO:
+        assert(relo);
+        file_elo = fdopen(fd, "r");
+        pp_cap(relo);
+        relo = relo + 0x25d0;
+        printf("writing tp\n\n\n");
+         pp_cap(relo);
+        fseek(file_elo, phdr[i].p_offset, SEEK_SET);
+        *relo = 0xDEADBEEF;
+        printf("'\n\nrelo section vaddr %x, memsz %x, filesz %x\n\n",phdr[i].p_vaddr,phdr[i].p_memsz, phdr[i].p_filesz);
+        u_int32_t * tempcheck = (u_int32_t *) malloc(sizeof(char) * phdr[i].p_memsz);
+        fread(tempcheck,sizeof(char),phdr[i].p_memsz,file_elo);
+        printf("\n\nchecking file \n\n");
+        for(int  i = 0; i < phdr[i].p_memsz / 4; i++ )
+          printf("-%d-", (u_int32_t *)tempcheck[i]);
+          
+          printf("\n\nchecking file \n\n");
+        //load_segment(base_addr, &phdr[i], fd, ehdr->e_type, is_interp);
+      */
       default:
         debug("Unhandled program header table entry type\n");
         break;
@@ -334,12 +399,19 @@ size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp, 
 #else 
   ELF_AUXV_T *s_aux = auxv;
 #endif 
-printf("s_aux cap info %#p \n",s_aux);
 
-printf("starting aux check \n");
   while(s_aux->a_type != AT_NULL) {
-    printf("SAUX \n");
-  #ifndef MORELLO
+    printf("SAUX  number %d\n",s_aux->a_type);
+  #ifndef MORELLOBSD
+    #ifdef MORELLO
+      switch(s_aux->a_type) {
+      case AT_PLATFORM:
+      case AT_EXECFN: {
+        char *s = (char *)s_aux->a_un.a_ptr;
+        size += strlen(s) + 1;
+      }
+    } // switch
+    #else
     switch(s_aux->a_type) {
       case AT_PLATFORM:
       case AT_EXECFN: {
@@ -347,7 +419,10 @@ printf("starting aux check \n");
         size += strlen(s) + 1;
       }
     } // switch
+    #endif
   #endif
+
+
     size += sizeof(*s_aux);
     s_aux++;
   } // while
@@ -378,13 +453,13 @@ void elf_run(uintptr_t entry_address, char *filename, int argc, char **argv, cha
   printf("\nstack_space - %#p \n ", stack_space);
   assert(stack_space != MAP_FAILED);
   notify_vm_op(VM_MAP, (uintptr_t)stack_space, INITIAL_STACK_SIZE, STACK_PROT, STACK_FLAGS, -1, 0);
-
+  pp_cap(stack_space);
 
 
   // Grows up (towards lower addresses)
   char *stack_strings = stack_space + INITIAL_STACK_SIZE;
 
-printf("\nstack_strings - %#p  \n", stack_strings);
+  printf("\nstack_strings - %#p  \n", stack_strings);
   // Grows down (towards higher addresses)
   size_t data_size = find_stack_data_size(filename, argc, argv, envp, auxv);
   //uintptr_t *stack = (uintptr_t *)align_lower_cap((uintptr_t *)(stack_space + INITIAL_STACK_SIZE - data_size), 16);
@@ -395,16 +470,26 @@ printf("\nstack_strings - %#p  \n", stack_strings);
 
   // Copy args
   stack_push(argc + 1);
-
+ uintptr_t argv_new = __builtin_align_up(&stack[stack_i],16);
   stack_push((uintptr_t)copy_string_to_stack(filename, &stack_strings));
   for (int i = 0; i < argc; i++) {
-    stack_push((uintptr_t)copy_string_to_stack(argv[i], &stack_strings));
+    uintptr_t argv_temp = (uintptr_t)copy_string_to_stack(argv[i], &stack_strings);
+    if(i == 0)
+      argv_new = argv_temp;
+    stack_push(argv_temp);
   }
   stack_push((uintptr_t)NULL);
-  
+
+
+  uintptr_t envp_new;
   // Copy env
+  uintptr_t envp_temp = (uintptr_t)copy_string_to_stack(*envp, &stack_strings);
+  stack_push(envp_temp);
+  envp_new = cheri_address_set( stack , &envp_temp);
+  envp++;
   while (*envp != NULL) {
-    stack_push((uintptr_t)copy_string_to_stack(*envp, &stack_strings));
+    uintptr_t envp_temp = (uintptr_t)copy_string_to_stack(*envp, &stack_strings);
+    stack_push(envp_temp);
     envp++;
   }
   stack_push((uintptr_t)NULL);
@@ -494,7 +579,17 @@ printf("\nstack_strings - %#p  \n", stack_strings);
 
 #elif MORELLO
         case AT_CHERI_EXEC_RW_CAP:
-        case AT_CHERI_EXEC_RX_CAP:{
+        case AT_CHERI_EXEC_RX_CAP:
+        case AT_CHERI_INTERP_RW_CAP:
+        case AT_CHERI_INTERP_RX_CAP:
+        case AT_CHERI_STACK_CAP:
+        case AT_CHERI_SEAL_CAP:
+        case AT_CHERI_CID_CAP:
+        case AT_ARGC:
+        case AT_ARGV:
+        case AT_ENVC:
+        case AT_ENVP:
+         {
         d_aux->a_un.a_ptr = s_aux->a_un.a_ptr;
         break;
         }
@@ -508,16 +603,17 @@ printf("\nstack_strings - %#p  \n", stack_strings);
         break;
 
       case AT_RANDOM: {
-        pp_cap(stack_strings);
+        
         stack_strings -= 15;
-        memcpy(stack_strings, (void *)s_aux->a_un.a_val, 16);
-        d_aux->a_un.a_val = (uintptr_t)stack_strings;
+
+        memcpy(stack_strings, (void *)s_aux->a_un.a_ptr, 16);
+        d_aux->a_un.a_ptr = (uintptr_t)stack_strings;
         stack_strings--;
         break;
       }
       case AT_PLATFORM:
       case AT_EXECFN:
-        d_aux->a_un.a_val = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_val, &stack_strings);
+        d_aux->a_un.a_ptr = (uintptr_t)copy_string_to_stack((char *)s_aux->a_un.a_ptr, &stack_strings);
         break;    
     
 
@@ -599,7 +695,17 @@ printf("\nstack_strings - %#p  \n", stack_strings);
   printf("\nDBM client entry\n");
 
   //AA TODO add argv pointer
-  dbm_client_entry(d_aux_start, &stack[0], entry_address);
+  //extern void dbm_client_entry(uint argc, uintptr_t * argv ,uintptr_t * envp ,uintptr_t * auxv ,uintptr_t * stack_top, uintptr_t  addr)
+
+  printf( "pre client entry checking \n");
+  
+  //for(char * temp = *(char *)argv_new; temp != NULL; temp++)
+  //{
+    printf("string - %s\n", argv_new);
+    pp_cap(argv_new);
+  //}
+
+  dbm_client_entry(argc + 1,argv_new, envp_new , d_aux_start, &stack[0], entry_address);
   
   // If we return here, something is horribly wrong
   while(1);
