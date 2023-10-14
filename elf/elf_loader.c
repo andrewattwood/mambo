@@ -183,7 +183,7 @@ void load_segment(uintptr_t base_addr, ELF_PHDR *phdr, int fd, Elf32_Half type, 
   }
 }
 
-int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintptr_t *entry_addr, bool is_interp, ELF_PHDR **ret_phdr, unsigned int * ret_phdr_num) {
+void * load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintptr_t *entry_addr, bool is_interp, ELF_PHDR **ret_phdr, unsigned int * ret_phdr_num) {
   int fd;
   FILE *file,*file_elo;
   Elf *elf;
@@ -314,6 +314,7 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
       //TODO:AA Fix passing in phdr and pdhr-count - We need to deal with the capabilities of shared libraries.
       //load_elf(interp, ret_elf, auxv, entry_addr, true);
     }
+   
   }
 
   if (is_interp) {
@@ -376,6 +377,7 @@ int load_elf(char *filename, Elf **ret_elf, struct elf_loader_auxv *auxv, uintpt
   } else { // !is_interp
     assert(auxv->at_phdr);
   }
+   return base_addr;
 }
 
 size_t find_stack_data_size(char *filename, int argc, char **argv, char **envp, struct elf_loader_auxv *auxv) {

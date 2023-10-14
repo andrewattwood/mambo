@@ -73,10 +73,10 @@ void dispatcher(const uintptr_t target, const uint32_t source_index,
   bool cached;
   *next_addr = lookup_or_scan_with_cached(thread_data, target, &cached);
   if (cached) {
-    debug("Found block from %d for 0x%" PRIxPTR " in cache at 0x%" PRIxPTR "\n",
+    printf("Found block from %d for 0x%" PRIxPTR " in cache at 0x%" PRIxPTR "\n",
           source_index, target, *next_addr);
   } else {
-    debug("Scanned at 0x%" PRIxPTR " for 0x%" PRIxPTR "\n", *next_addr, target);
+    printf("Scanned at 0x%" PRIxPTR " for 0x%" PRIxPTR "\n", *next_addr, target);
   }
 #else
    *next_addr = lookup_or_scan(thread_data, target);

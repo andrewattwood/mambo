@@ -57,23 +57,23 @@ START_PC_ROUTINE push_neon
 
 
 push_neon:
-  STP  GP_REG(0),  GP_REG(1), [PTR_REG(SP), #-512]!
-  STP  GP_REG(2),  GP_REG(3), [PTR_REG(SP),   #32]
-  STP  GP_REG(4),  GP_REG(5), [PTR_REG(SP),   #64]
-  STP  GP_REG(6),  GP_REG(7), [PTR_REG(SP),   #96]
-  STP  GP_REG(8),  GP_REG(9), [PTR_REG(SP),  #128]
-  STP GP_REG(10), GP_REG(11), [PTR_REG(SP),  #160]
-  STP GP_REG(12), GP_REG(13), [PTR_REG(SP),  #192]
-  STP GP_REG(14), GP_REG(15), [PTR_REG(SP),  #224]
-  STP GP_REG(16), GP_REG(17), [PTR_REG(SP),  #256]
-  STP GP_REG(18), GP_REG(19), [PTR_REG(SP),  #288]
-  STP GP_REG(20), GP_REG(21), [PTR_REG(SP),  #320]
-  STP GP_REG(22), GP_REG(23), [PTR_REG(SP),  #352]
-  STP GP_REG(24), GP_REG(25), [PTR_REG(SP),  #384]
-  STP GP_REG(26), GP_REG(27), [PTR_REG(SP),  #416]
-  STP GP_REG(28), GP_REG(29), [PTR_REG(SP),  #448]
-  STP GP_REG(30), GP_REG(31), [PTR_REG(SP),  #480]
-  RET
+    STP  Q0,  Q1, [CSP, #-512]!
+  STP  Q2,  Q3, [CSP,   #32]
+  STP  Q4,  Q5, [CSP,   #64]
+  STP  Q6,  Q7, [CSP,   #96]
+  STP  Q8,  Q9, [CSP,  #128]
+  STP Q10, Q11, [CSP,  #160]
+  STP Q12, Q13, [CSP,  #192]
+  STP Q14, Q15, [CSP,  #224]
+  STP Q16, Q17, [CSP,  #256]
+  STP Q18, Q19, [CSP,  #288]
+  STP Q20, Q21, [CSP,  #320]
+  STP Q22, Q23, [CSP,  #352]
+  STP Q24, Q25, [CSP,  #384]
+  STP Q26, Q27, [CSP,  #416]
+  STP Q28, Q29, [CSP,  #448]
+  STP Q30, Q31, [CSP,  #480]
+	RET
 
 END_PC_ROUTINE push_neon
 
@@ -81,22 +81,22 @@ START_PC_ROUTINE pop_neon
 
 
 pop_neon:
-  LDP  GP_REG(2),  GP_REG(3), [PTR_REG(SP), #32]
-  LDP  GP_REG(4),  GP_REG(5), [PTR_REG(SP), #64]
-  LDP  GP_REG(6),  GP_REG(7), [PTR_REG(SP), #96]
-  LDP  GP_REG(8),  GP_REG(9), [PTR_REG(SP), #128]
-  LDP GP_REG(10), GP_REG(11), [PTR_REG(SP), #160]
-  LDP GP_REG(12), GP_REG(13), [PTR_REG(SP), #192]
-  LDP GP_REG(14), GP_REG(15), [PTR_REG(SP), #224]
-  LDP GP_REG(16), GP_REG(17), [PTR_REG(SP), #256]
-  LDP GP_REG(18), GP_REG(19), [PTR_REG(SP), #288]
-  LDP GP_REG(20), GP_REG(21), [PTR_REG(SP), #320]
-  LDP GP_REG(22), GP_REG(23), [PTR_REG(SP), #352]
-  LDP GP_REG(24), GP_REG(25), [PTR_REG(SP), #384]
-  LDP GP_REG(26), GP_REG(27), [PTR_REG(SP), #416]
-  LDP GP_REG(28), GP_REG(29), [PTR_REG(SP), #448]
-  LDP GP_REG(30), GP_REG(31), [PTR_REG(SP), #480]
-  LDP  GP_REG(0),  GP_REG(1), [PTR_REG(SP)], #512
+  LDP  Q2,  Q3, [CSP, #32]
+  LDP  Q4,  Q5, [CSP, #64]
+  LDP  Q6,  Q7, [CSP, #96]
+  LDP  Q8,  Q9, [CSP, #128]
+  LDP Q10, Q11, [CSP, #160]
+  LDP Q12, Q13, [CSP, #192]
+  LDP Q14, Q15, [CSP, #224]
+  LDP Q16, Q17, [CSP, #256]
+  LDP Q18, Q19, [CSP, #288]
+  LDP Q20, Q21, [CSP, #320]
+  LDP Q22, Q23, [CSP, #352]
+  LDP Q24, Q25, [CSP, #384]
+  LDP Q26, Q27, [CSP, #416]
+  LDP Q28, Q29, [CSP, #448]
+  LDP Q30, Q31, [CSP, #480]
+  LDP  Q0,  Q1, [CSP], #512
   RET
 
 END_PC_ROUTINE pop_neon
@@ -150,7 +150,7 @@ dispatcher_trampoline:
   LDR GP_REG(3), disp_thread_data
   LDR GP_REG(9), dispatcher_addr
   BL push_neon
-
+  cvtp C9, X9
   BLR GP_REG(9) // BLR to dispatcher()
 
   BL pop_neon
@@ -213,7 +213,6 @@ create_trace_trampoline:
   //LDR GP_REG(3), =create_trace
   ADR GP_REG(3), create_trace
   BL push_neon
-
   BLR GP_REG(3)
 
   BL pop_neon

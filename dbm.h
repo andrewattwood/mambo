@@ -231,6 +231,7 @@ struct dbm_thread_s {
   int pending_signals[_NSIG];
   uint32_t is_signal_pending;
   void *mambo_sp;
+  void *elf_base;
 };
 
 typedef enum {

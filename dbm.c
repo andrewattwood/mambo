@@ -26,6 +26,11 @@
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
+#ifdef MORELLO
+
+#include "cheriintrin.h"
+#endif
+
 #ifdef MORELLOBSD
 #include <unistd.h>
 #include <sys/thr.h>
@@ -205,6 +210,10 @@ uintptr_t scan(dbm_thread *thread_data, uint16_t *address, int basic_block) {
 
   debug("scan(%p)\n", address);
 
+
+  address = (uint16_t *)((unsigned int)address & ~1);
+
+  address = cheri_address_set(thread_data->elf_base , address);
   // Alocate a basic block
   if (basic_block == ALLOCATE_BB) {
     basic_block = allocate_bb(thread_data);
@@ -409,7 +418,11 @@ void init_thread(dbm_thread *thread_data) {
   flush_code_cache(thread_data);
 
   // Copy the trampolines to the code cache
-  memcpy(&thread_data->code_cache->blocks[0], &start_of_dispatcher_s, trampolines_size_bytes);
+  
+  uintptr_t * code_cache_start = cheri_address_set(thread_data->code_cache, &thread_data->code_cache->blocks[0]);
+  uintptr_t * start_of_disp = cheri_address_set(cheri_pcc_get(), &start_of_dispatcher_s);
+  
+  memcpy(code_cache_start, start_of_disp, trampolines_size_bytes);
 
   dispatcher_thread_data = (dbm_thread **)((uintptr_t)&thread_data->code_cache->blocks[0]
                                            + dispatcher_thread_data_offset);
@@ -659,9 +672,11 @@ int main(int argc, char **argv, char **envp) {
   uintptr_t entry_address;
   ELF_PHDR * phdr;
   unsigned int phdr_num;
+  dbm_thread *thread_data;
 
   printf("load elf phdr = %#p\n",phdr);
-  load_elf(argv[1], &elf, &auxv, &entry_address, false, &phdr ,&phdr_num);
+  
+  void * elf_base =  load_elf(argv[1], &elf, &auxv, &entry_address, false, &phdr ,&phdr_num);
   debug("entry address: 0x%" PRIxPTR "\n", entry_address);
   #define ARGDIFF 2
 
@@ -678,14 +693,14 @@ int main(int argc, char **argv, char **envp) {
   global_data.initial_brk = global_data.brk = (uintptr_t)map;
   global_data.brk += PAGE_SIZE;
   
-  dbm_thread *thread_data;
+
   if (!allocate_thread_data(&thread_data)) {
     fprintf(stderr, "Failed to allocate initial thread data\n");
     while(1);
   }
   current_thread = thread_data;
   init_thread(thread_data);
-  
+  thread_data->elf_base = elf_base;
   #ifdef MORELLOBSD 
   thr_self(&thread_data->tid);
   #else
@@ -698,7 +713,7 @@ int main(int argc, char **argv, char **envp) {
   debug("Address of first basic block is: 0x%" PRIxPTR "\n", block_address);
 
   printf("running elf");
-  elf_run(entry_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv, phdr, phdr_num);
+  elf_run(block_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv, phdr, phdr_num);
 
 
   return 0;

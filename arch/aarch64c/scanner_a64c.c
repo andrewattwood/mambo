@@ -46,7 +46,7 @@
 
 void a64_branch_helper(uint32_t *write_p, uint64_t target, bool link) {
   int64_t difference = target - (uint64_t)write_p;
-  assert(((difference & 3) == 0)
+  assert((((difference & 3) == 0) || ((difference & 3) == 1))
          && (difference < 128*1024*1024 && difference >= -128*1024*1024));
 
   a64c_B_BL(&write_p, link ? 1 : 0, difference >> 2);
@@ -554,8 +554,8 @@ size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
   uint32_t *start_address;
   enum reg spilled_reg;
   uint64_t imm;
-  uint32_t immlo, immhi, imm19, imm26;
-  uint32_t CRn, CRm, Rd, Rn, Rt;
+  uint32_t immlo, immhi, imm19, imm26, imm12;
+  uint32_t CRd, CRn, CRm, Rd, Rn, Rt, sh;
   uint32_t cond, o0, op, op1, op2, opc, R, V;
 
   uint64_t branch_offset;
@@ -586,7 +586,9 @@ size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
    * to be popped from the Stack. The same is true for trace entries, however
    * trace fragments do not need a pop instruction.
    */
-  if (type != mambo_trace) {
+
+  //AA this is a hack we need to preserve c0 and c1 in the first bb scanned
+  if ((type != mambo_trace) && (basic_block != 4)) {
     a64c_pop_pair_reg_cap(c0, c1);
   }
 
@@ -625,9 +627,26 @@ size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
 #endif
 
     switch (inst){
-      case A64C_CBZ_CBNZ:
-        a64c_branch_imm_reg(thread_data, &write_p, basic_block, inst, read_address);
-        stop = true;
+
+	case A64C_ADRP_C_IP_C:
+		printf("adrp read address %p\n",read_address);
+		a64c_adrp_c_ip_c_decode_fields (read_address,&Rd,&immhi,&immlo);
+		immhi = immhi << 2;
+		immhi = immhi & immlo;
+		immhi = immhi << 12;
+		uint64_t adrp_target = sign_extend64(32, immhi) + read_address;
+		a64_copy_to_reg_64bits(&write_p, Rd, adrp_target);
+		a64c_B_BL(&write_p,0,0);
+		write_p++;
+	break;
+	case A64C_ADD_C_CIS_C:
+		a64c_add_c_cis_c_decode_fields(read_address,&CRd,&CRn,&sh,&imm12);
+	printf("scanning addc\n");	
+
+	break;
+      	case A64C_CBZ_CBNZ:
+        	a64c_branch_imm_reg(thread_data, &write_p, basic_block, inst, read_address);
+        	stop = true;
         break;
 
       case A64C_B_COND:
@@ -878,7 +897,7 @@ size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
         PC_relative_address += imm;
         a64_copy_to_reg_64bits(&write_p, Rd, PC_relative_address);
         break;
-
+      case A64C_CPY_C_C_C:
       case A64C_HVC:
       case A64C_BRK:
       case A64C_HINT:
