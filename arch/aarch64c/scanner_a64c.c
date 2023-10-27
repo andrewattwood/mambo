@@ -548,7 +548,7 @@ void a64_inline_hash_lookup(dbm_thread *thread_data, int basic_block, uint32_t *
 size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
                 int basic_block, cc_type type, uint32_t *write_p) {
   bool stop = false;
-
+printf("scan BB %d \n",basic_block);
   uint32_t *start_scan = read_address, *bb_entry = read_address;
   uint32_t *data_p;
   uint32_t *start_address;
@@ -625,22 +625,25 @@ size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
                                                    &write_p, &data_p, basic_block, type, true, &stop);
     if (!skip_inst) {
 #endif
-
+ printf("Scanning instruction for bb %d at address %p\n", basic_block, read_address);
     switch (inst){
-
 	case A64C_ADRP_C_IP_C:
 		printf("adrp read address %p\n",read_address);
 		a64c_adrp_c_ip_c_decode_fields (read_address,&Rd,&immhi,&immlo);
 		immhi = immhi << 2;
-		immhi = immhi & immlo;
+		immhi = immhi | immlo;
 		immhi = immhi << 12;
-		uint64_t adrp_target = sign_extend64(32, immhi) + read_address;
+		uint64_t adrp_target = sign_extend64(32, immhi + ((unsigned long long)read_address & ~0xFFF));
+		printf("adrp target %p\n",adrp_target);
 		a64_copy_to_reg_64bits(&write_p, Rd, adrp_target);
-		a64c_B_BL(&write_p,0,0);
+		//AA this is a hack using the golden pcc cap
+		a64c_cvtp_c_r_c (&write_p,Rd,Rd);
 		write_p++;
+//		a64c_B_BL(&write_p,0,0);
+//		write_p++;
 	break;
-	case A64C_ADD_C_CIS_C:
-		a64c_add_c_cis_c_decode_fields(read_address,&CRd,&CRn,&sh,&imm12);
+//	case A64C_ADD_C_CIS_C:
+//		a64c_add_c_cis_c_decode_fields(read_address,&CRd,&CRn,&sh,&imm12);
 	printf("scanning addc\n");	
 
 	break;
@@ -751,7 +754,9 @@ size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
         a64c_B_BL_decode_fields(read_address, &op, &imm26);
 
         if (op == 1) { // Branch Link
-          a64_copy_to_reg_64bits(&write_p, lr, (uint64_t)read_address + 4);
+          a64_copy_to_reg_64bits(&write_p, lr, (uint64_t)read_address + 5);
+	  a64c_cvtp_c_r_c (&write_p,lr,lr);
+          write_p++;
         }
 
         branch_offset = sign_extend64(26, imm26) << 2;
@@ -897,6 +902,60 @@ size_t scan_a64c(dbm_thread *thread_data, uint32_t *read_address,
         PC_relative_address += imm;
         a64_copy_to_reg_64bits(&write_p, Rd, PC_relative_address);
         break;
+      case A64C_RET_C_C: 
+      case A64C_LDR_C_RUIB_C:    
+  case A64C_STCT_R_R_:
+  case A64C_ASTLR_C_R_C:
+  case A64C_STLR_C_R_C:
+  case A64C_ASTLR_R_R_32:
+  case A64C_ASTLRB_R_R_B:
+  case A64C_STLXP_R_CR_C:
+  case A64C_STLXR_R_CR_C:
+  case A64C_STNP_C_RIB_C:
+  case A64C_STP_CC_RIAW_C:
+  case A64C_STP_C_RIBW_C:
+  case A64C_STP_C_RIB_C:
+  case A64C_STR_C_RIAW_C:
+  case A64C_STR_C_RIBW_C:
+  case A64C_ASTR_C_RRB_C:
+  case A64C_STR_C_RRB_C:
+  case A64C_ASTR_R_RRB_64:
+  case A64C_ASTR_R_RRB_32:
+  case A64C_ASTR_V_RRB_D:
+  case A64C_ASTR_V_RRB_S:
+  case A64C_ASTR_C_RUI_C:
+  case A64C_STR_C_RUIB_C:
+  case A64C_ASTR_R_RUI_64:
+  case A64C_ASTR_R_RUI_32:
+  case A64C_ASTRB_R_RRB_B:
+  case A64C_ASTRB_R_RUI_B:
+  case A64C_ASTRH_R_RRB_32:
+  case A64C_STTR_C_RIB_C:
+  case A64C_ASTUR_C_RI_C:
+  case A64C_STUR_C_RI_C:
+  case A64C_ASTUR_R_RI_64:
+  case A64C_ASTUR_R_RI_32:
+  case A64C_ASTUR_V_RI_B:
+  case A64C_ASTUR_V_RI_H:
+  case A64C_ASTUR_V_RI_S:
+  case A64C_ASTUR_V_RI_D:
+  case A64C_ASTUR_V_RI_Q:
+  case A64C_ASTURB_R_RI_32:
+  case A64C_ASTURH_R_RI_32:
+  case A64C_STXP_R_CR_C:
+  case A64C_STXR_R_CR_C:
+      case A64C_SCBNDS_C_CI_S:
+  case A64C_SCBNDS_C_CI_C:
+  case A64C_SCBNDS_C_CR_C:
+      case A64C_CSEL_C_CI_C:
+      case A64C_SCVALUE_C_CR_C:
+      case A64C_CLRPERM_C_CI_C:
+      case A64C_CLRPERM_C_CR_C:
+	case A64C_SCBNDSE_C_CR_C:	
+	case A64C_SCOFF_C_CR_C:
+      case A64C_SEAL_C_CC_C:
+      case A64C_SEAL_C_CI_C:
+      case A64C_ADD_C_CIS_C:
       case A64C_CPY_C_C_C:
       case A64C_HVC:
       case A64C_BRK:

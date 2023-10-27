@@ -51,7 +51,7 @@ void dispatcher(const uintptr_t target, const uint32_t source_index,
 /* It's essential to copy exit_branch_type before calling lookup_or_scan
      because when scanning a stub basic block the source block and its
      meta-information get overwritten */
-  debug("Source block index: %d\n", source_index);
+  printf("Source block index: %d\n", source_index);
   branch_type source_branch_type =
                     thread_data->code_cache_meta[source_index].exit_branch_type;
 

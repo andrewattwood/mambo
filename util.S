@@ -15,7 +15,8 @@ dbm_client_entry:
  # MOV c3, c2
  # mov x1, xzr
  # mov x2, xzr
-  STP cZR, cZR, [cSP, #-(2 * 16)]!
+#Not needed as we need to preserve C0 and C1 on entry to the first bb
+#  STP cZR, cZR, [cSP, #-(2 * 16)]!
   BR c5
 
 

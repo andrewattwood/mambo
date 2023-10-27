@@ -285,7 +285,7 @@ extern enum arm_cond_codes arm_inverse_cond_code[];
  * STP Ct1, Ct2, [CSP]!
  */
 #define a64c_push_pair_reg_cap(Ct1, Ct2) \
-  a64c_stp_cc_riaw_c(&write_p, Ct1, Ct2, csp, -2); \
+  a64c_stp_c_ribw_c(&write_p, Ct1, Ct2, csp, -2); \
   write_p++;
 
 

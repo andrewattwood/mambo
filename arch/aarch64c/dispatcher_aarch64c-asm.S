@@ -317,7 +317,10 @@ checked_cc_return:
   LDR W2, [GP_REG(2)]
   CBNZ W2, deliver_signals_trampoline
   LDR GP_REG(2), [PTR_REG(SP)], #(2 * PTR_SIZE)
-  BR GP_REG(0)
+  ADD GP_REG(0), GP_REG(0), #1
+  //cvtp GP_REG(0)
+// ADD CSP,CSP,#16 
+ BR GP_REG(0)
 deliver_signals_trampoline:
   STP GP_REG(0), GP_REG(1), [PTR_REG(SP), #-(2 * PTR_SIZE)]!
   MOV GP_REG(0), GP_REG(1) // set the SPC argument
